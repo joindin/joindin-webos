@@ -1,8 +1,5 @@
-function EventDetailAssistant() {
-	/* this is the creator function for your scene assistant object. It will be passed all the 
-	   additional parameters (after the scene name) that were passed to pushScene. The reference
-	   to the scene controller (this.controller) has not be established yet, so any initialization
-	   that needs the scene controller should be done in the setup function below. */
+function EventDetailAssistant(event_data) {
+	   this.event_data = event_data;
 }
 
 EventDetailAssistant.prototype.setup = function() {
@@ -11,8 +8,36 @@ EventDetailAssistant.prototype.setup = function() {
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	
 	/* setup widgets here */
+	this.controller.setupWidget("eventTalksDrawer",
+	    this.eventTalksDrawerAttributes = {
+	        modelProperty: 'open',
+	        unstyled: true
+	    },
+	    this.eventTalksDrawerModel = {
+	        open: false
+	    }
+	);
+	
+	$('#eventDetailHeader').html(
+	    Mojo.View.render({
+	        object: this.event_data,
+	        template: 'event-detail/event-detail-headerTemplate'
+	    })
+	);
+	
+	$('#eventDetailDescription').html(
+	    Mojo.View.render({
+	        object: this.event_data,
+	        template: 'event-detail/event-detail-descriptionTemplate'
+	    })
+	);
 	
 	/* add event handlers to listen to events from widgets */
+	this.controller.listen(
+	    this.controller.get('eventTalksDivider'),
+	    Mojo.Event.tap,
+	    this.toggleEventTalksDrawer.bindAsEventListener(this)
+	);
 };
 
 EventDetailAssistant.prototype.activate = function(event) {
@@ -28,4 +53,20 @@ EventDetailAssistant.prototype.deactivate = function(event) {
 EventDetailAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
+};
+
+EventDetailAssistant.prototype.toggleEventTalksDrawer = function() {
+    var eventTalksDrawer = this.controller.get('eventTalksDrawer');
+    eventTalksDrawer.mojo.setOpenState(!eventTalksDrawer.mojo.getOpenState());
+    
+    if( eventTalksDrawer.mojo.getOpenState() == true ) {
+        this.controller.get('eventTalksDividerArrow')
+            .removeClassName('palm-arrow-closed')
+            .addClassName('palm-arrow-expanded');
+    }
+    else {
+        this.controller.get('eventTalksDividerArrow')
+            .removeClassName('palm-arrow-expanded')
+            .addClassName('palm-arrow-closed');
+    }
 };
