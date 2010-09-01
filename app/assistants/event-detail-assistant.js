@@ -14,9 +14,10 @@ EventDetailAssistant.prototype.setup = function() {
 	        unstyled: true
 	    },
 	    this.eventTalksDrawerModel = {
-	        open: false
+	        open: true
 	    }
 	);
+	
     this.controller.setupWidget("eventDescriptionDrawer",
 	    this.eventTalksDrawerAttributes = {
 	        modelProperty: 'open',
@@ -25,6 +26,31 @@ EventDetailAssistant.prototype.setup = function() {
 	    this.eventTalksDrawerModel = {
 	        open: true
 	    }
+	);
+	
+	this.controller.setupWidget("talksProgressSpinner",
+	    this.talksProgressSpinnerAttributes = {
+	        spinnerSize: 'large'
+	    },
+	    this.talksProgressSpinnerModel = {
+	        spinning: false
+	    }
+	);
+	
+	this.controller.setupWidget("eventTalksList",
+	    this.eventTalksListAttributes = {
+	        itemTemplate: "event-detail/eventTalksList-item",
+	        emptyTemplate: "event-detail/eventTalksList-empty",
+	        formatters: {
+	            tcid: function(value, model) {
+	                if( value )
+	                    model.tcid = value.replace(/[^\w]+/i, '-').toLowerCase();
+	                else
+	                    model.tcid = "none";
+	            }.bind(this)
+	        }
+	    },
+	    this.eventTalksListModel = {items: []}
 	);
 	
 	$('#eventDetailHeader').html(
@@ -57,6 +83,7 @@ EventDetailAssistant.prototype.setup = function() {
 EventDetailAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
+    this.refreshTalks();
 };
 
 EventDetailAssistant.prototype.deactivate = function(event) {
@@ -84,4 +111,48 @@ EventDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerI
             .removeClassName('palm-arrow-expanded')
             .addClassName('palm-arrow-closed');
     }
+};
+
+EventDetailAssistant.prototype.showTalksProgressSpinner = function() {
+    this.talksProgressSpinnerModel.spinning = true;
+    this.controller.modelChanged(this.talksProgressSpinnerModel);
+};
+
+EventDetailAssistant.prototype.hideTalksProgressSpinner = function () {
+    this.talksProgressSpinnerModel.spinning = false;
+    this.controller.modelChanged(this.talksProgressSpinnerModel);
+};
+
+EventDetailAssistant.prototype.refreshTalks = function() {
+    this.showTalksProgressSpinner();
+    
+    PreJoindIn.getInstance().getEventTalks({
+        event_id: this.event_data.ID,
+        onSuccess: this.fetchEventTalksSuccess.bind(this),
+        onFailure: this.fetchEventTalksFailure.bind(this)
+    });
+};
+
+EventDetailAssistant.prototype.fetchEventTalksSuccess = function(data) {
+    this.hideTalksProgressSpinner();
+    
+    this.eventTalksListModel.items = [];
+    
+    if( data.msg ) {
+        Mojo.Controller.errorDialog(data.msg);
+        return;
+    }
+    
+    var that = this;
+    data.each(function(talk) {
+        that.eventTalksListModel.items.push(talk);
+    });
+    
+    this.controller.modelChanged(this.eventTalksListModel);
+};
+
+EventDetailAssistant.prototype.fetchEventTalksFailure = function(xhr, msg, exec) {
+    this.hideTalksProgressSpinner();
+    
+    Mojo.Controller.errorDialog(msg);
 };

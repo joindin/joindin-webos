@@ -1,3 +1,63 @@
 .eventList {
     margin-top: 50px;
 }
+
+.eventTalkDescription {
+    white-space: pre-wrap;
+}
+
+
+
+.rating {
+    width: 60px;
+    height: 11px;
+    display: inline-block;
+    
+    background: url('../images/rating-0.gif') top left no-repeat;
+}
+
+.rating.rank-1 {
+    background-image: url('../images/rating-1.gif');
+}
+
+.rating.rank-2 {
+    background-image: url('../images/rating-2.gif');
+}
+
+.rating.rank-3 {
+    background-image: url('../images/rating-3.gif');
+}
+
+.rating.rank-4 {
+    background-image: url('../images/rating-4.gif');
+}
+
+.rating.rank-5 {
+    background-image: url('../images/rating-5.gif');
+}
+
+.talk-type {
+    width: 21px;
+    height: 16px;
+    display: inline-block;
+}
+
+.talk-type.talk-type-none {
+    display: none;
+}
+
+.talk-type.talk-type-talk {
+    background: url('../images/talk.gif') top left no-repeat;
+}
+
+.talk-type.talk-type-social-event {
+    background: url('../images/social-event.gif') top left no-repeat;
+}
+
+.talk-type.talk-type-workshop {
+    background: url('../images/workshop.gif') top left no-repeat;
+}
+
+.talk-type.talk-type-keynote {
+    background: url('../images/keynote.gif') top left no-repeat;
+}

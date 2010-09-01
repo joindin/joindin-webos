@@ -141,7 +141,7 @@ MainAssistant.prototype.fetchEventListSuccess = function(data, type) {
 
 MainAssistant.prototype.fetchEventListFailure = function(xhr, msg, exec) {
     this.hideSpinner();
-    this.controller.errorDialog(msg);
+    Mojo.Controller.errorDialog(msg);
 };
 
 MainAssistant.prototype.viewEventDetails = function(event) {

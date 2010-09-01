@@ -52,7 +52,7 @@ function SpazJoindIn(opts) {
 	opts = sch.defaults({
         username: null,
         password: null,
-        baseURL: 'http://test.joind.in/api',
+        baseURL: 'http://joind.in/api',
         eventTarget: document
 	}, opts);
 	
