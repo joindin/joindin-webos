@@ -17,6 +17,15 @@ EventDetailAssistant.prototype.setup = function() {
 	        open: false
 	    }
 	);
+    this.controller.setupWidget("eventDescriptionDrawer",
+	    this.eventTalksDrawerAttributes = {
+	        modelProperty: 'open',
+	        unstyled: true
+	    },
+	    this.eventTalksDrawerModel = {
+	        open: true
+	    }
+	);
 	
 	$('#eventDetailHeader').html(
 	    Mojo.View.render({
@@ -25,7 +34,7 @@ EventDetailAssistant.prototype.setup = function() {
 	    })
 	);
 	
-	$('#eventDetailDescription').html(
+	$('#eventDescriptionDrawer').html(
 	    Mojo.View.render({
 	        object: this.event_data,
 	        template: 'event-detail/event-detail-descriptionTemplate'
@@ -36,7 +45,12 @@ EventDetailAssistant.prototype.setup = function() {
 	this.controller.listen(
 	    this.controller.get('eventTalksDivider'),
 	    Mojo.Event.tap,
-	    this.toggleEventTalksDrawer.bindAsEventListener(this)
+	    this.toggleDrawer.bindAsEventListener(this, 'eventTalksDivider', 'eventTalksDrawer')
+	);
+   	this.controller.listen(
+	    this.controller.get('eventDescriptionDivider'),
+	    Mojo.Event.tap,
+	    this.toggleDrawer.bindAsEventListener(this, 'eventDescriptionDivider', 'eventDescriptionDrawer')
 	);
 };
 
@@ -55,17 +69,18 @@ EventDetailAssistant.prototype.cleanup = function(event) {
 	   a result of being popped off the scene stack */
 };
 
-EventDetailAssistant.prototype.toggleEventTalksDrawer = function() {
-    var eventTalksDrawer = this.controller.get('eventTalksDrawer');
+EventDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerId) {
+    Mojo.Log.info("DividerId", dividerId, "DrawerId", drawerId);
+    var eventTalksDrawer = this.controller.get(drawerId);
     eventTalksDrawer.mojo.setOpenState(!eventTalksDrawer.mojo.getOpenState());
     
     if( eventTalksDrawer.mojo.getOpenState() == true ) {
-        this.controller.get('eventTalksDividerArrow')
+        this.controller.get(dividerId + 'Arrow')
             .removeClassName('palm-arrow-closed')
             .addClassName('palm-arrow-expanded');
     }
     else {
-        this.controller.get('eventTalksDividerArrow')
+        this.controller.get(dividerId + 'Arrow')
             .removeClassName('palm-arrow-expanded')
             .addClassName('palm-arrow-closed');
     }
