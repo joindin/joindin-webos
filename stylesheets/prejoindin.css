@@ -2,11 +2,15 @@
     margin-top: 50px;
 }
 
+/* ** EVENT DETAIL ** */
+#talksProgressSpinner {
+    left: 50%;
+    margin-left: 64px;
+}
+
 .eventTalkDescription {
     white-space: pre-wrap;
 }
-
-
 
 .rating {
     width: 60px;
