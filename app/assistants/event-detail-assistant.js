@@ -134,7 +134,6 @@ EventDetailAssistant.prototype.refreshTalks = function() {
 };
 
 EventDetailAssistant.prototype.fetchEventTalksSuccess = function(data) {
-    sleep(2);
     this.hideTalksProgressSpinner();
     
     this.eventTalksListModel.items = [];

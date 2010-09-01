@@ -4,8 +4,9 @@
 
 /* ** EVENT DETAIL ** */
 #talksProgressSpinner {
+    position: relative;
     left: 50%;
-    margin-left: 64px;
+    margin-left: -64px;
 }
 
 .eventTalkDescription {
