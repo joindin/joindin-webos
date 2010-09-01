@@ -1,0 +1,9 @@
+{
+	"id": "com.dcousineau.prejoindin",
+	"version": "0.1.0",
+	"vendor": "Daniel Cousineau",
+	"type": "web",
+	"main": "index.html",
+	"title": "Pre Joind.In",
+	"icon": "icon.png"
+}
