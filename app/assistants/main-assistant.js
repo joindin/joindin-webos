@@ -100,9 +100,9 @@ MainAssistant.prototype.updateEventList = function(type, force) {
                     else if( event_start.getDate() != event_end.getDate() ) {
                         event_range += event_end.format('dS');
                     }
+                }    
                     
-                    event_range += event_end.format(', yyyy');
-                }
+                event_range += event_end.format(', yyyy');
                 
                 event.formatted = {
                     event_start: event_start.format('mmmm dS, yyyy'),
