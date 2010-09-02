@@ -88,7 +88,12 @@ TalkDetailAssistant.prototype.setup = function() {
 	    this.talkCommentsListAttributes = {
 	        itemTemplate: "talk-detail/talkCommentsList-item",
 	        emptyTemplate: "talk-detail/talkCommentsList-empty",
-	        formatters: {}
+	        formatters: {
+	            uname: function(value, model) {
+	                if( !value )
+	                    model.uname = 'anonymous';
+	            }
+	        }
 	    },
 	    this.talkCommentsListModel = {
 	        items: [],

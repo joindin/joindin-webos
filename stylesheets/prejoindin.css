@@ -12,6 +12,10 @@
     white-space: pre-wrap;
 }
 
+.comment .comment-body {
+    white-space: pre-wrap;
+}
+
 .center-large-spinner {
     position: relative;
     left: 50%;
