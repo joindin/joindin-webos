@@ -7,13 +7,18 @@
 	    "resources": [
 	        {
 	            "type": "web",
-	            "label": "Bug Tracker",
-	            "url": "http://bitbucket.org/dcousineau/prejoindin/issues"
+	            "label": "Report Bug",
+	            "url": "http://bitbucket.org/dcousineau/prejoindin/issues/new"
 	        },
 	        {
 	            "type": "web",
 	            "label": "Source",
 	            "url": "http://bitbucket.org/dcousineau/prejoindin"
+	        },
+	        {
+	            "type": "web",
+	            "label": "License",
+	            "url": "http://www.gnu.org/licenses/gpl.html"
 	        }
 	    ]
 	},
