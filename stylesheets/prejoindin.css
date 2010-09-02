@@ -9,7 +9,12 @@
     margin-left: -64px;
 }
 
-.eventTalkDescription {
+.eventDetailDescription {
+    white-space: pre-wrap;
+}
+
+/* ** TALK DETAIL ** */
+.talkDetailDescription {
     white-space: pre-wrap;
 }
 

@@ -1,15 +1,11 @@
 [
     {"source": "app/assistants/app-assistant.js"},
     {"source": "app/assistants/stage-assistant.js"},
-    
     {"source": "library/stevenleviathan/date.format.js"},
     {"source": "library/jquery/jquery-1.4.2.js"},
-    
     {"source": "library/spaz/spazcore-standard.js"},
     {"source": "library/spaz/spazjoindin.js"},
-    
     {"source": "library/prejoindin/prefs.js"},
-    
     {
         "scenes": "function",
         "source": "app/assistants/function-assistant.js"
@@ -21,5 +17,9 @@
     {
         "scenes": "event-detail",
         "source": "app/assistants/event-detail-assistant.js"
+    },
+    {
+        "scenes": "talk-detail",
+        "source": "app/assistants/talk-detail-assistant.js"
     }
 ]

@@ -5,5 +5,8 @@
 	"type": "web",
 	"main": "index.html",
 	"title": "PreJoind.In",
-	"icon": "icon.png"
+	
+	"icon": "icon.png",
+	"splashIcon": "",
+	"splashBackground": "splash-background.png"
 }

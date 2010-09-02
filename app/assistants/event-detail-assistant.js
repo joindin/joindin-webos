@@ -73,17 +73,21 @@ EventDetailAssistant.prototype.setup = function() {
 	    Mojo.Event.tap,
 	    this.toggleDrawer.bindAsEventListener(this, 'eventTalksDivider', 'eventTalksDrawer')
 	);
+	
    	this.controller.listen(
 	    this.controller.get('eventDescriptionDivider'),
 	    Mojo.Event.tap,
 	    this.toggleDrawer.bindAsEventListener(this, 'eventDescriptionDivider', 'eventDescriptionDrawer')
 	);
+    
+    this.controller.listen("eventTalksList", Mojo.Event.listTap, this.viewTalkDetails.bindAsEventListener(this));
+    
+    this.refreshTalks();
 };
 
 EventDetailAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
-    this.refreshTalks();
 };
 
 EventDetailAssistant.prototype.deactivate = function(event) {
@@ -97,7 +101,6 @@ EventDetailAssistant.prototype.cleanup = function(event) {
 };
 
 EventDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerId) {
-    Mojo.Log.info("DividerId", dividerId, "DrawerId", drawerId);
     var eventTalksDrawer = this.controller.get(drawerId);
     eventTalksDrawer.mojo.setOpenState(!eventTalksDrawer.mojo.getOpenState());
     
@@ -145,6 +148,16 @@ EventDetailAssistant.prototype.fetchEventTalksSuccess = function(data) {
     
     var that = this;
     data.each(function(talk) {
+        
+        talk.formatted = {};
+        
+        var speakers = [];
+        talk.speaker.each(function(speaker){
+            speakers.push(speaker.speaker_name);
+        });
+        
+        talk.formatted.speaker = speakers.join(', ');
+        
         that.eventTalksListModel.items.push(talk);
     });
     
@@ -155,4 +168,12 @@ EventDetailAssistant.prototype.fetchEventTalksFailure = function(xhr, msg, exec)
     this.hideTalksProgressSpinner();
     
     Mojo.Controller.errorDialog(msg);
+};
+
+EventDetailAssistant.prototype.viewTalkDetails = function(talk) {
+    var item = this.eventTalksListModel.items[talk.index];
+    this.controller.stageController.pushScene({
+        name: 'talk-detail', 
+        templateModel: item
+    }, item);
 };
