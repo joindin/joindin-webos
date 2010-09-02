@@ -1,7 +1,26 @@
 {
 	"id": "com.dcousineau.prejoindin",
 	"version": "0.1.0",
+	"copyright": "Released under GPLv3, Joind.In © 2010 Joind.In",
+	
+	"support": {
+	    "resources": [
+	        {
+	            "type": "web",
+	            "label": "Bug Tracker",
+	            "url": "http://bitbucket.org/dcousineau/prejoindin/issues"
+	        },
+	        {
+	            "type": "web",
+	            "label": "Source",
+	            "url": "http://bitbucket.org/dcousineau/prejoindin"
+	        }
+	    ]
+	},
+	
 	"vendor": "Daniel Cousineau",
+	"vendorurl": "http://dcousineau.com/",
+	
 	"type": "web",
 	"main": "index.html",
 	"title": "PreJoind.In",

@@ -13,7 +13,7 @@ MainAssistant.prototype.setup = function() {
 	this.controller.setupWidget( Mojo.Menu.commandMenu,
 	    this.commandMenuAttributes = {},
 	    this.commandMenuModel = {items: [
-	        {visable: false},
+	        {visible: false},
 	        {
 	            items: [
 	                {icon: '', command: 'filter-past', label: 'Past'},
@@ -22,9 +22,11 @@ MainAssistant.prototype.setup = function() {
 	            ],
 	            toggleCmd: 'filter-hot'
 	        },
-	        {visable: false}
+	        {visible: false}
 	    ]}
 	);
+	
+	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
 		
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	

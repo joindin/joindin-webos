@@ -10,5 +10,17 @@ PreJoindIn = {
     
     reloadInstance: function() {
         PreJoindIn._spazJoindIn = new SpazJoindIn({});
+    },
+    
+    appMenuAttributes: {
+        omitDefaultItems: true
+    },
+    
+    appMenuModel: {
+        visible: true,
+        items: [
+            Mojo.Menu.editItem,
+            {label: "About...", command: "do-about"}
+        ]
     }
 }

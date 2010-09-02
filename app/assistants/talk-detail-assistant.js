@@ -9,6 +9,8 @@ function TalkDetailAssistant(talk_data) {
 
 TalkDetailAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
+	
+	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
 		
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	
