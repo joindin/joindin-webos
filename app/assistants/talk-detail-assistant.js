@@ -4,6 +4,7 @@ function TalkDetailAssistant(talk_data) {
 	   to the scene controller (this.controller) has not be established yet, so any initialization
 	   that needs the scene controller should be done in the setup function below. */
 	this.talk_data = talk_data;
+	this.comments_data = null;
 }
 
 TalkDetailAssistant.prototype.setup = function() {
@@ -74,6 +75,27 @@ TalkDetailAssistant.prototype.setup = function() {
 	    $('#slides').remove();
 	}
 	
+	this.controller.setupWidget("commentsProgressSpinner",
+	    this.commentsProgressSpinnerAttributes = {
+	        spinnerSize: 'large'
+	    },
+	    this.commentsProgressSpinnerModel = {
+	        spinning: false
+	    }
+	);
+	
+	this.controller.setupWidget("talkCommentsList",
+	    this.talkCommentsListAttributes = {
+	        itemTemplate: "talk-detail/talkCommentsList-item",
+	        emptyTemplate: "talk-detail/talkCommentsList-empty",
+	        formatters: {}
+	    },
+	    this.talkCommentsListModel = {
+	        items: [],
+	        disabled: true
+	    }
+	);
+	
 	/* add event handlers to listen to events from widgets */
    	this.controller.listen(
 	    this.controller.get('talkDescriptionDivider'),
@@ -84,7 +106,7 @@ TalkDetailAssistant.prototype.setup = function() {
    	this.controller.listen(
 	    this.controller.get('talkCommentsDivider'),
 	    Mojo.Event.tap,
-	    this.toggleDrawer.bindAsEventListener(this, 'talkCommentsDivider', 'talkCommentsDrawer')
+	    this.toggleCommentsDrawer.bindAsEventListener(this, 'talkCommentsDivider', 'talkCommentsDrawer')
 	);
 };
 
@@ -122,10 +144,10 @@ TalkDetailAssistant.prototype.slidesButtonTap = function(event) {
 };
 
 TalkDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerId) {
-    var eventTalksDrawer = this.controller.get(drawerId);
-    eventTalksDrawer.mojo.setOpenState(!eventTalksDrawer.mojo.getOpenState());
+    var drawer = this.controller.get(drawerId);
+    drawer.mojo.setOpenState(!drawer.mojo.getOpenState());
     
-    if( eventTalksDrawer.mojo.getOpenState() == true ) {
+    if( drawer.mojo.getOpenState() == true ) {
         this.controller.get(dividerId + 'Arrow')
             .removeClassName('palm-arrow-closed')
             .addClassName('palm-arrow-expanded');
@@ -135,4 +157,62 @@ TalkDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerId
             .removeClassName('palm-arrow-expanded')
             .addClassName('palm-arrow-closed');
     }
+};
+
+TalkDetailAssistant.prototype.toggleCommentsDrawer = function(event, dividerId, drawerId) {
+    var drawer = this.controller.get(drawerId);
+    
+    if( drawer.mojo.getOpenState() == false && !this.comments_data ) {
+        this.refreshComments();
+    }
+    
+    this.toggleDrawer(event, dividerId, drawerId);
+};
+
+TalkDetailAssistant.prototype.refreshComments = function() {
+    this.showCommentsProgressSpinner();
+    
+    PreJoindIn.getInstance().getTalkComments({
+        talk_id: this.talk_data.ID,
+        onSuccess: this.fetchTalkCommentsSuccess.bind(this),
+        onFailure: this.fetchTalkCommentsFailure.bind(this)
+    });
+};
+
+TalkDetailAssistant.prototype.fetchTalkCommentsSuccess = function(data) {
+    this.hideCommentsProgressSpinner();
+    
+    this.talkCommentsListModel.items = [];
+    
+    if( data.msg ) {
+        Mojo.Controller.errorDialog(data.msg);
+        return;
+    }
+    
+    var that = this;
+    data.each(function(comment) {
+        that.talkCommentsListModel.items.push(comment);
+    });
+    
+    this.comments_data = this.talkCommentsListModel.items;
+    
+    this.controller.modelChanged(this.talkCommentsListModel);
+};
+
+TalkDetailAssistant.prototype.fetchTalkCommentsFailure = function(xhr, msg, exec) {
+    this.hideCommentsProgressSpinner();
+    
+    Mojo.Controller.errorDialog(msg);
+};
+
+
+
+TalkDetailAssistant.prototype.showCommentsProgressSpinner = function() {
+    this.commentsProgressSpinnerModel.spinning = true;
+    this.controller.modelChanged(this.commentsProgressSpinnerModel);
+};
+
+TalkDetailAssistant.prototype.hideCommentsProgressSpinner = function () {
+    this.commentsProgressSpinnerModel.spinning = false;
+    this.controller.modelChanged(this.commentsProgressSpinnerModel);
 };
