@@ -1,15 +1,30 @@
+body.wallpaper,
+body.palm-default {
+    background: #fff;
+}
+
 .eventList {
     margin-top: 50px;
+}
+
+/* ** EVENT LIST ** */
+.palm-row.event .title {
 }
 
 /* ** EVENT DETAIL ** */
 .eventDetailDescription {
     white-space: pre-wrap;
+    
+    font-size: 14px;
+    margin: 0 15px 0 15px;
 }
 
 /* ** TALK DETAIL ** */
 .talkDetailDescription {
     white-space: pre-wrap;
+    
+    font-size: 14px;
+    margin: 0 15px 0 15px;
 }
 
 .comment .comment-body {
