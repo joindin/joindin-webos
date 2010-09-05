@@ -31,6 +31,7 @@
 	"title": "PreJoind.In",
 	
 	"icon": "icon.png",
-	"splashIcon": "",
+	"miniicon": "icon-mini.png",
+	"splashicon": "icon-256x256.png",
 	"splashBackground": "splash-background.png"
 }
