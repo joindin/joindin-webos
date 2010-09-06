@@ -49,7 +49,7 @@ EventDetailAssistant.prototype.setup = function() {
 	    }
 	);
 	
-	this.controller.setupWidget("eventCommentsProgressSpinner",
+	this.controller.setupWidget("commentsProgressSpinner",
 	    this.eventCommentsProgressSpinnerAttributes = {
 	        spinnerSize: 'large'
 	    },
