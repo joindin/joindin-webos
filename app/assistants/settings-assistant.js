@@ -6,7 +6,7 @@ SettingsAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
 	this.model = {
 	    username: PreJoindIn.getSetting('username'),
-	    password: PreJoindIn.getSetting('password')
+	    password: PreJoindIn.getSetting('password') ? '******' : ''
 	};
 	
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
@@ -19,8 +19,8 @@ SettingsAssistant.prototype.setup = function() {
             hintText: $L("User Name"),
             multiline: false,
             enterSubmits: false,
-            autoFocus: true,
             textCase: Mojo.Widget.steModeLowerCase,
+            autoFocus: false,
             modelProperty: 'username'
         },
         this.model
@@ -30,6 +30,7 @@ SettingsAssistant.prototype.setup = function() {
         this.inputPasswordAttributes = {
             hintText: $L("Password"),
             enterSubmits: false,
+            autoFocus: false,
             modelProperty: 'password'
         },
         this.model
@@ -37,7 +38,8 @@ SettingsAssistant.prototype.setup = function() {
 	
 	/* add event handlers to listen to events from widgets */
 	this.controller.listen('inputUserName', Mojo.Event.propertyChange, this.saveSettings.bindAsEventListener(this));
-	
+	this.controller.listen('inputPassword', Mojo.Event.propertyChange, this.saveSettings.bindAsEventListener(this));
+    
 };
 
 SettingsAssistant.prototype.activate = function(event) {
@@ -53,11 +55,22 @@ SettingsAssistant.prototype.deactivate = function(event) {
 SettingsAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
+	
+    PreJoindIn.getInstance().setCredentials(this.model.username, this.model.password);
+    
+    Mojo.Event.send(document, 'settingsChanged');
 };
 
 SettingsAssistant.prototype.saveSettings = function(event) {
     for( key in this.model ) {
-        PreJoindIn.setSetting(key, this.model[key]);
+        if( key == 'password' ) {
+            if( this.model[key] == '******' )
+                continue;
+            
+            PreJoindIn.setSetting(key, sc.helpers.MD5(this.model[key]));
+        }
+        else
+            PreJoindIn.setSetting(key, this.model[key]);
     }
     
     PreJoindIn.saveSettings();

@@ -52,7 +52,7 @@ function SpazJoindIn(opts) {
 	opts = sch.defaults({
         username: null,
         password: null,
-        baseURL: 'http://joind.in/api',
+        baseURL: 'http://test.joind.in/api',
         eventTarget: document
 	}, opts);
 	
@@ -78,8 +78,8 @@ SpazJoindIn.prototype.setCredentials = function(username, password) {
 SpazJoindIn.prototype.getCredentials = function() {
     if( this.hasCredentials() ) {
         return {
-            username: this.username,
-            password: this.password
+            user: this.username,
+            pass: this.password
         }
     } else {
         return false;
@@ -368,9 +368,10 @@ SpazJoindIn.prototype._callMethod = function(opts) {
         }
     };
 
-    if( opts.auth )
+    if( opts.auth || this.hasCredentials() ) {
         parameters.request.auth = this.getCredentials();
-
+    }
+    
 	jQuery.ajax({
 		url: url,
         contentType: 'application/json',
@@ -381,14 +382,15 @@ SpazJoindIn.prototype._callMethod = function(opts) {
             if (opts.onSuccess) {
 				opts.onSuccess.call(that, data, textStatus);
 			}
-
-			sch.trigger(opts.successEvent, that.eventTarget, data);
+            
+            sc.helpers.triggerCustomEvent(opts.successEvent, that.eventTarget, data);
 		},
 		error: function(xhr, msg, exc) {
 			if (opts.onFailure) {
 				opts.onFailure.call(that, xhr, msg, exc);
 			}
-			sch.trigger(opts.failureEvent, that.eventTarget, {'url':url, 'xhr':xhr, 'msg':msg});
+            
+            sc.helpers.triggerCustomEvent(opts.failureEvent, that.eventTarget, {'url':url, 'xhr':xhr, 'msg':msg});
 		}
 	});
 };

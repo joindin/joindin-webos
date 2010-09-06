@@ -40,6 +40,8 @@ MainAssistant.prototype.setup = function() {
 	);
 	
 	/* add event handlers to listen to events from widgets */
+	Mojo.Event.listen(document, 'settingsChanged', function() { this.updateEventList(this.currentFilter, true); }.bind(this));
+	
 	this.controller.listen("eventList", Mojo.Event.listTap, this.viewEventDetails.bindAsEventListener(this));
 	this.controller.listen("eventFilter", Mojo.Event.filter, this.filterEventList.bindAsEventListener(this));
 	
@@ -89,6 +91,8 @@ MainAssistant.prototype.updateEventList = function(type, force) {
         return;
     
     this.showSpinner();
+
+    this.setCurrentFilter(type);
     
     PreJoindIn.getInstance().getEventListing({
         type: type,
@@ -139,8 +143,6 @@ MainAssistant.prototype.fetchEventListSuccess = function(data, type) {
         that.eventListModel.items.push(event);
     });
     
-    this.setCurrentFilter(type);
-    
     this.controller.modelChanged(this.eventListModel);
     this.controller.getSceneScroller().mojo.revealTop();
     
@@ -162,7 +164,7 @@ MainAssistant.prototype.viewEventDetails = function(event) {
     this.controller.stageController.pushScene({
         name: 'event-detail', 
         templateModel: item
-    }, item);
+    }, item, this);
 };
 
 MainAssistant.prototype.showSpinner = function() {

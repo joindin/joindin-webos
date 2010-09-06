@@ -18,6 +18,7 @@ PreJoindIn.getInstance = function() {
     
 PreJoindIn.reloadInstance = function() {
     this._spazJoindIn = new SpazJoindIn({
+        baseURL: 'http://joind.in/api',
         username: this.getSetting('username'),
         password: this.getSetting('password')
     });
@@ -54,8 +55,6 @@ PreJoindIn.saveSettings = function() {
         this._saveSettingsDbSuccess.bind(this),
         this._saveSettingsDbFailure.bind(this)
     );
-    
-    this.reloadInstance();
 };
 
 PreJoindIn._saveSettingsDbSuccess = function(event) {
