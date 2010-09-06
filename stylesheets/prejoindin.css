@@ -80,6 +80,22 @@ body.palm-default {
     margin-left: -64px;
 }
 
+.smallSpinnerGroup {
+    
+}
+
+.smallSpinnerGroup .label {
+    margin-left: 15px;
+    font-size: 20px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.smallSpinnerGroup .spinner {
+    display: inline-block;
+    vertical-align: middle;
+}
+
 .rating {
     width: 60px;
     height: 11px;

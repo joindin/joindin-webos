@@ -43,6 +43,9 @@
     </tbody>
 </table>
 <div id="talkCommentsDrawer" x-mojo-element="Drawer">
-    <div x-mojo-element="Spinner" id="commentsProgressSpinner" class="center-large-spinner"></div>
+    <div id="commentsProgressSpinnerWrapper" class="smallSpinnerGroup" style="display: none;">
+        <span class="label">Loading Comments...</span>
+        <div x-mojo-element="Spinner" id="commentsProgressSpinner" class="spinner"></div>
+    </div>
     <div x-mojo-element="List" id="talkCommentsList" name="talkCommentsList" class="talkCommentsList"></div>
 </div>

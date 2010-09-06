@@ -4,12 +4,25 @@ function EventDetailAssistant(event_data) {
 
 EventDetailAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
-	
-	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
 		
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
+	$('#eventDetailHeader').html(
+	    Mojo.View.render({
+	        object: this.event_data,
+	        template: 'event-detail/event-detail-headerTemplate'
+	    })
+	);
+	
+	$('#eventDescriptionDrawer').html(
+	    Mojo.View.render({
+	        object: this.event_data,
+	        template: 'event-detail/event-detail-descriptionTemplate'
+	    })
+	);
 	
 	/* setup widgets here */
+	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
+	
 	this.controller.setupWidget("eventTalksDrawer",
 	    this.eventTalksDrawerAttributes = {
 	        modelProperty: 'open',
@@ -42,7 +55,7 @@ EventDetailAssistant.prototype.setup = function() {
 	
 	this.controller.setupWidget("talksProgressSpinner",
 	    this.talksProgressSpinnerAttributes = {
-	        spinnerSize: 'large'
+	        spinnerSize: 'small'
 	    },
 	    this.talksProgressSpinnerModel = {
 	        spinning: false
@@ -51,7 +64,7 @@ EventDetailAssistant.prototype.setup = function() {
 	
 	this.controller.setupWidget("commentsProgressSpinner",
 	    this.eventCommentsProgressSpinnerAttributes = {
-	        spinnerSize: 'large'
+	        spinnerSize: 'small'
 	    },
 	    this.eventCommentsProgressSpinnerModel = {
 	        spinning: false
@@ -92,40 +105,30 @@ EventDetailAssistant.prototype.setup = function() {
 	    }
 	);
 	
-	$('#eventDetailHeader').html(
-	    Mojo.View.render({
-	        object: this.event_data,
-	        template: 'event-detail/event-detail-headerTemplate'
-	    })
-	);
-	
-	$('#eventDescriptionDrawer').html(
-	    Mojo.View.render({
-	        object: this.event_data,
-	        template: 'event-detail/event-detail-descriptionTemplate'
-	    })
-	);
-	
 	/* add event handlers to listen to events from widgets */
 	this.controller.listen(
-	    this.controller.get('eventTalksDivider'),
+	    "eventTalksDivider",
 	    Mojo.Event.tap,
 	    this.toggleDrawer.bindAsEventListener(this, 'eventTalksDivider', 'eventTalksDrawer')
 	);
 	
    	this.controller.listen(
-	    this.controller.get('eventDescriptionDivider'),
+        "eventDescriptionDivider",
 	    Mojo.Event.tap,
 	    this.toggleDrawer.bindAsEventListener(this, 'eventDescriptionDivider', 'eventDescriptionDrawer')
 	);
 
    	this.controller.listen(
-	    this.controller.get('eventCommentsDivider'),
+	    "eventCommentsDivider",
 	    Mojo.Event.tap,
 	    this.toggleCommentsDrawer.bindAsEventListener(this, 'eventCommentsDivider', 'eventCommentsDrawer')
 	);
     
-    this.controller.listen("eventTalksList", Mojo.Event.listTap, this.viewTalkDetails.bindAsEventListener(this));
+    this.controller.listen(
+        "eventTalksList", 
+        Mojo.Event.listTap, 
+        this.viewTalkDetails.bindAsEventListener(this)
+    );
     
     this.refreshTalks();
 };
@@ -145,6 +148,9 @@ EventDetailAssistant.prototype.cleanup = function(event) {
 	   a result of being popped off the scene stack */
 };
 
+/**
+ * Generic helper function to toggle a drawer associated with a divider
+ */
 EventDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerId) {
     var eventTalksDrawer = this.controller.get(drawerId);
     eventTalksDrawer.mojo.setOpenState(!eventTalksDrawer.mojo.getOpenState());
@@ -161,6 +167,9 @@ EventDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerI
     }
 };
 
+/**
+ * Custom helper function to load comments the first time the comments drawer is opened
+ */
 EventDetailAssistant.prototype.toggleCommentsDrawer = function(event, dividerId, drawerId) {
     var drawer = this.controller.get(drawerId);
     
@@ -171,25 +180,28 @@ EventDetailAssistant.prototype.toggleCommentsDrawer = function(event, dividerId,
     this.toggleDrawer(event, dividerId, drawerId);
 };
 
-
 EventDetailAssistant.prototype.showTalksProgressSpinner = function() {
     this.talksProgressSpinnerModel.spinning = true;
     this.controller.modelChanged(this.talksProgressSpinnerModel);
+    $('#talksProgressSpinnerWrapper').fadeIn('fast', function() { $(this).show(); });
 };
 
 EventDetailAssistant.prototype.hideTalksProgressSpinner = function () {
     this.talksProgressSpinnerModel.spinning = false;
     this.controller.modelChanged(this.talksProgressSpinnerModel);
+    $('#talksProgressSpinnerWrapper').fadeOut('fast', function() { $(this).hide(); });
 };
 
 EventDetailAssistant.prototype.showCommentsProgressSpinner = function() {
     this.eventCommentsProgressSpinnerModel.spinning = true;
     this.controller.modelChanged(this.eventCommentsProgressSpinnerModel);
+    $('#commentsProgressSpinnerWrapper').fadeIn('fast', function() { $(this).show(); });
 };
 
 EventDetailAssistant.prototype.hideCommentsProgressSpinner = function () {
     this.eventCommentsProgressSpinnerModel.spinning = false;
     this.controller.modelChanged(this.eventCommentsProgressSpinnerModel);
+    $('#commentsProgressSpinnerWrapper').fadeOut('fast', function() { $(this).hide(); });
 };
 
 EventDetailAssistant.prototype.refreshTalks = function() {
@@ -236,15 +248,6 @@ EventDetailAssistant.prototype.fetchEventTalksFailure = function(xhr, msg, exec)
     Mojo.Controller.errorDialog(msg);
 };
 
-EventDetailAssistant.prototype.viewTalkDetails = function(talk) {
-    var item = this.eventTalksListModel.items[talk.index];
-    this.controller.stageController.pushScene({
-        name: 'talk-detail', 
-        templateModel: item
-    }, item);
-};
-
-
 EventDetailAssistant.prototype.refreshComments = function() {
     this.showCommentsProgressSpinner();
     
@@ -279,4 +282,12 @@ EventDetailAssistant.prototype.fetchEventCommentsFailure = function(xhr, msg, ex
     this.hideCommentsProgressSpinner();
     
     Mojo.Controller.errorDialog(msg);
+};
+
+EventDetailAssistant.prototype.viewTalkDetails = function(talk) {
+    var item = this.eventTalksListModel.items[talk.index];
+    this.controller.stageController.pushScene({
+        name: 'talk-detail', 
+        templateModel: item
+    }, item);
 };

@@ -9,12 +9,25 @@ function TalkDetailAssistant(talk_data) {
 
 TalkDetailAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
-	
-	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
 		
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
+	$('#talkDetailWrapper').html(
+	    Mojo.View.render({
+	        object: this.talk_data,
+	        template: 'talk-detail/talk-detail-headerTemplate'
+	    })
+	);
+	
+	$('#talkDescriptionDrawer').html(
+	    Mojo.View.render({
+	        object: this.talk_data,
+	        template: 'talk-detail/talk-detail-descriptionTemplate'
+	    })
+	);
 	
 	/* setup widgets here */
+	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
+	
     this.controller.setupWidget("talkDescriptionDrawer",
 	    this.eventTalksDrawerAttributes = {
 	        modelProperty: 'open',
@@ -33,20 +46,6 @@ TalkDetailAssistant.prototype.setup = function() {
 	    this.eventTalksDrawerModel = {
 	        open: false
 	    }
-	);
-	
-	$('#talkDetailWrapper').html(
-	    Mojo.View.render({
-	        object: this.talk_data,
-	        template: 'talk-detail/talk-detail-headerTemplate'
-	    })
-	);
-	
-	$('#talkDescriptionDrawer').html(
-	    Mojo.View.render({
-	        object: this.talk_data,
-	        template: 'talk-detail/talk-detail-descriptionTemplate'
-	    })
 	);
 	
 	if( this.talk_data.slides_link ) {
@@ -79,7 +78,7 @@ TalkDetailAssistant.prototype.setup = function() {
 	
 	this.controller.setupWidget("commentsProgressSpinner",
 	    this.commentsProgressSpinnerAttributes = {
-	        spinnerSize: 'large'
+	        spinnerSize: 'small'
 	    },
 	    this.commentsProgressSpinnerModel = {
 	        spinning: false
@@ -217,9 +216,11 @@ TalkDetailAssistant.prototype.fetchTalkCommentsFailure = function(xhr, msg, exec
 TalkDetailAssistant.prototype.showCommentsProgressSpinner = function() {
     this.commentsProgressSpinnerModel.spinning = true;
     this.controller.modelChanged(this.commentsProgressSpinnerModel);
+    $('#commentsProgressSpinnerWrapper').show();
 };
 
 TalkDetailAssistant.prototype.hideCommentsProgressSpinner = function () {
     this.commentsProgressSpinnerModel.spinning = false;
     this.controller.modelChanged(this.commentsProgressSpinnerModel);
+    $('#commentsProgressSpinnerWrapper').hide();
 };

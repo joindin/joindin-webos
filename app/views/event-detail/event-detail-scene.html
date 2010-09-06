@@ -39,7 +39,10 @@
     </tbody>
 </table>
 <div id="eventTalksDrawer" x-mojo-element="Drawer">
-    <div x-mojo-element="Spinner" id="talksProgressSpinner" class="center-large-spinner"></div>
+    <div id="talksProgressSpinnerWrapper" class="smallSpinnerGroup" style="display: none;">
+        <span class="label">Loading Talks...</span>
+        <div x-mojo-element="Spinner" id="talksProgressSpinner" class="spinner"></div>
+    </div>
     <div x-mojo-element="List" id="eventTalksList" name="eventTalksList" class="eventTalksList"></div>
 </div>
 
@@ -60,6 +63,9 @@
     </tbody>
 </table>
 <div id="eventCommentsDrawer" x-mojo-element="Drawer">
-    <div x-mojo-element="Spinner" id="commentsProgressSpinner" class="center-large-spinner"></div>
+    <div id="commentsProgressSpinnerWrapper" class="smallSpinnerGroup" style="display: none;">
+        <span class="label">Loading Comments...</span>
+        <div x-mojo-element="Spinner" id="commentsProgressSpinner" class="spinner"></div>
+    </div>
     <div x-mojo-element="List" id="eventCommentsList" name="eventCommentsList" class="eventCommentsList"></div>
 </div>
