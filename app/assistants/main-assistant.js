@@ -4,27 +4,12 @@ function MainAssistant() {
 	   to the scene controller (this.controller) has not be established yet, so any initialization
 	   that needs the scene controller should be done in the setup function below. */
     this.currentFilter = null;
+    
+    this.oldListItems = null;
 }
 
 MainAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
-	
-	/* COMMAND MENU */
-	this.controller.setupWidget( Mojo.Menu.commandMenu,
-	    this.commandMenuAttributes = {},
-	    this.commandMenuModel = {items: [
-	        {visible: false},
-	        {
-	            items: [
-	                {icon: '', command: 'filter-past', label: 'Past'},
-    	            {icon: '', command: 'filter-hot', label: 'Hot'},
-	                {icon: '', command: 'filter-upcoming', label: 'Upcoming'}
-	            ],
-	            toggleCmd: 'filter-hot'
-	        },
-	        {visible: false}
-	    ]}
-	);
 	
 	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
 		
@@ -48,8 +33,20 @@ MainAssistant.prototype.setup = function() {
 	    this.eventListModel = {items: []}
 	);
 	
+	this.controller.setupWidget("eventFilter",
+	    this.eventFilterAttributes = {
+	        delay: 500
+	    },
+	    this.eventFilterModel = {
+	        disabled: false
+	    }
+	);
+	
 	/* add event handlers to listen to events from widgets */
 	this.controller.listen("eventList", Mojo.Event.listTap, this.viewEventDetails.bindAsEventListener(this));
+	this.controller.listen("eventFilter", Mojo.Event.filter, this.filterEventList.bindAsEventListener(this));
+	
+	this.controller.listen("eventTypeButton", Mojo.Event.tap, this.setEventType.bindAsEventListener(this));
 	
 	/* load initial data */
 	this.updateEventList('hot', true);
@@ -70,13 +67,25 @@ MainAssistant.prototype.cleanup = function(event) {
 	   a result of being popped off the scene stack */
 };
 
-MainAssistant.prototype.handleCommand = function(event) {
-    if( event.type == Mojo.Event.command ) {
-        var matches = event.command.match(/^filter-(.*)$/i)
-        
-        if( matches.length == 2 )
-            this.updateEventList(matches[1]);
+MainAssistant.prototype.setEventTypePopupChoose = function(command) {
+    if( command ) {
+        this.updateEventList(command);
+        $('#eventTypeButton .label').html(command);
     }
+};
+
+MainAssistant.prototype.setEventType = function(event) {
+    this.controller.popupSubmenu({
+        onChoose: this.setEventTypePopupChoose.bind(this),
+        placeNear: this.controller.get('eventTypeButton'),
+        manualPlacement: true,
+        popupClass: 'eventTypePopup',
+        items: [
+            {icon: '', command: 'past', label: 'Past', chosen: this.currentFilter == 'past' ? true : false},
+            {icon: '', command: 'hot', label: 'Hot', chosen: this.currentFilter == 'hot' ? true : false},
+            {icon: '', command: 'upcoming', label: 'Upcoming', chosen: this.currentFilter == 'upcoming' ? true : false}
+        ]
+    });
 };
 
 MainAssistant.prototype.updateEventList = function(type, force) {
@@ -134,7 +143,8 @@ MainAssistant.prototype.fetchEventListSuccess = function(data, type) {
         that.eventListModel.items.push(event);
     });
     
-    this.currentFilter = type;
+    this.setCurrentFilter(type);
+    
     this.controller.modelChanged(this.eventListModel);
     this.controller.getSceneScroller().mojo.revealTop();
     
@@ -144,6 +154,11 @@ MainAssistant.prototype.fetchEventListSuccess = function(data, type) {
 MainAssistant.prototype.fetchEventListFailure = function(xhr, msg, exec) {
     this.hideSpinner();
     Mojo.Controller.errorDialog(msg);
+};
+
+MainAssistant.prototype.setCurrentFilter = function(type) {
+    this.currentFilter = type;
+    $('#eventTypeButton .label').html(type);
 };
 
 MainAssistant.prototype.viewEventDetails = function(event) {
@@ -164,4 +179,34 @@ MainAssistant.prototype.hideSpinner = function() {
     $('#progressScrim').hide();
     this.spinnerModel.spinning = false;
     this.controller.modelChanged(this.spinnerModel);
+};
+
+MainAssistant.prototype.filterEventList = function(event) {
+    if( event.filterString ) {
+        if( !this.oldListItems )
+            this.oldListItems = this.eventListModel.items;
+        
+        var newItems = [];
+        
+        var filterRe = new RegExp(".*" + event.filterString.replace(/([\*\.\+\?\=\^\$\!\{\}\[\]\\])/gi, "\\$1").replace(/\s+/gi, ".*") + ".*", "i");
+        
+        Mojo.Log.info(filterRe, event.filterString);
+        
+        this.oldListItems.each(function(_event) {
+            if( _event.event_name.match(filterRe) )
+                newItems.push(_event);
+        });
+        
+        this.eventListModel.items = newItems;
+    }
+    else if( this.oldListItems ) {
+        this.eventListModel.items = this.oldListItems;
+        this.oldListModel = null;
+    }
+    
+    this.controller.modelChanged(this.eventListModel);
+    
+    this.controller.get('eventFilter').mojo.setCount(this.eventListModel.items.length);
+    
+    return true;
 };

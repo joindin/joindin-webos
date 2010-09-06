@@ -11,6 +11,49 @@ body.palm-default {
 .palm-row.event .title {
 }
 
+#eventFilter .filter-field-container-height {
+    height:96px;
+}
+
+#header.main-header {
+    margin-right: 0;
+}
+
+#header .left {
+    float: left;
+}
+
+#header .button {
+    -webkit-border-image:url(../images/header-button.png) 0 16 0 16 repeat repeat;
+    border-width: 0px 16px 0px 16px;
+    -webkit-box-sizing: border-box;
+    float:right;
+    height:34px;
+    margin: 9px 0px 0px 0px;
+    text-transform: uppercase;
+    padding-top:1px;
+    position:relative;
+    font-size: 14px;
+    line-height: 32px;
+}
+
+#header .button:active,
+#header .button.selected {
+    -webkit-border-image:url(../images/header-button-press.png) 0 16 0 16 repeat repeat;
+}
+
+#eventTypeButton {
+    margin-right: -15px !important;
+}
+
+.eventTypePopup {
+    top: 10px;
+    left: 35%;
+    
+    margin: 0;
+    padding: 0;
+}
+
 /* ** EVENT DETAIL ** */
 .eventDetailDescription {
     white-space: pre-wrap;
