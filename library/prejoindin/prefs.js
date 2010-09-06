@@ -20,6 +20,7 @@ PreJoindIn = {
         visible: true,
         items: [
             Mojo.Menu.editItem,
+            {label: "Settings...", command: "do-settings"},
             {label: "About...", command: "do-about"}
         ]
     }

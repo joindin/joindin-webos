@@ -1,15 +1,10 @@
 [
     {"source": "library/stevenleviathan/date.format.js"},
-    
     {"source": "library/jquery/jquery-1.4.2.js"},
-    
     {"source": "library/spaz/spazcore-standard.js"},
     {"source": "library/spaz/spazjoindin.js"},
-    
     {"source": "library/prejoindin/prefs.js"},
-    
     {"source": "app/assistants/stage-assistant.js"},
-    
     {
         "scenes": "main",
         "source": "app/assistants/main-assistant.js"
@@ -21,5 +16,9 @@
     {
         "scenes": "talk-detail",
         "source": "app/assistants/talk-detail-assistant.js"
+    },
+    {
+        "scenes": "settings",
+        "source": "app/assistants/settings-assistant.js"
     }
 ]

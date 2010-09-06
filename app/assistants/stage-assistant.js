@@ -16,6 +16,11 @@ StageAssistant.prototype.handleCommand = function(event) {
                 Mojo.Controller.stageController.pushAppSupportInfoScene();
                 
                 break;
+            case 'do-settings':
+                
+                this.controller.pushScene('settings');
+                
+                break;
             
         }
     }
