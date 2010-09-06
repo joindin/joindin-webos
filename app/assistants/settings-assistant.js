@@ -12,7 +12,13 @@ SettingsAssistant.prototype.setup = function() {
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	
 	/* setup widgets here */
-    this.initAppMenu();
+    this.initAppMenu({
+        items: [
+			Mojo.Menu.editItem,
+            {label: $L("Preferences..."), command: "do-settings", disabled: true},
+            {label: $L("About..."), command: "do-about"}
+		]
+    });
     
     this.controller.setupWidget("inputUserName",
         this.inputUserNameAttributes = {
