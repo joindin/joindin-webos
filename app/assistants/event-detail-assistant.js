@@ -122,7 +122,7 @@ EventDetailAssistant.prototype.setup = function() {
    	this.controller.listen(
 	    this.controller.get('eventCommentsDivider'),
 	    Mojo.Event.tap,
-	    this.toggleCommentsDrawer.bindAsEventListener(this, 'talkCommentsDivider', 'talkCommentsDrawer')
+	    this.toggleCommentsDrawer.bindAsEventListener(this, 'eventCommentsDivider', 'eventCommentsDrawer')
 	);
     
     this.controller.listen("eventTalksList", Mojo.Event.listTap, this.viewTalkDetails.bindAsEventListener(this));
