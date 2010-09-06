@@ -3,6 +3,8 @@ function StageAssistant() {
 }
 
 StageAssistant.prototype.setup = function() {
+    PreJoindIn.loadSettingsDb();
+    
 	this.controller.setWindowOrientation("free");
 	this.controller.pushScene("main");
 };

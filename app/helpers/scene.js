@@ -1,3 +1,4 @@
+// This file initially ripped wholesale from SpazWebOS. Thanks Ed!
 var scene_helpers = {}
 
 scene_helpers.addCommonSceneMethods = function(assistant) {
@@ -5,7 +6,7 @@ scene_helpers.addCommonSceneMethods = function(assistant) {
 
 		var default_items = [
 			Mojo.Menu.editItem,
-            {label: $L("Settings..."), command: "do-settings"},
+            {label: $L("Preferences..."), command: "do-settings"},
             {label: $L("About..."), command: "do-about"}
 		];
 

@@ -4,14 +4,40 @@ function SettingsAssistant() {
 
 SettingsAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
-		
+	this.model = {
+	    username: PreJoindIn.getSetting('username'),
+	    password: PreJoindIn.getSetting('password')
+	};
+	
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	
 	/* setup widgets here */
     this.initAppMenu();
     
+    this.controller.setupWidget("inputUserName",
+        this.inputUserNameAttributes = {
+            hintText: $L("User Name"),
+            multiline: false,
+            enterSubmits: false,
+            autoFocus: true,
+            textCase: Mojo.Widget.steModeLowerCase,
+            modelProperty: 'username'
+        },
+        this.model
+    );
+
+    this.controller.setupWidget("inputPassword",
+        this.inputPasswordAttributes = {
+            hintText: $L("Password"),
+            enterSubmits: false,
+            modelProperty: 'password'
+        },
+        this.model
+    );
 	
 	/* add event handlers to listen to events from widgets */
+	this.controller.listen('inputUserName', Mojo.Event.propertyChange, this.saveSettings.bindAsEventListener(this));
+	
 };
 
 SettingsAssistant.prototype.activate = function(event) {
@@ -27,4 +53,12 @@ SettingsAssistant.prototype.deactivate = function(event) {
 SettingsAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
+};
+
+SettingsAssistant.prototype.saveSettings = function(event) {
+    for( key in this.model ) {
+        PreJoindIn.setSetting(key, this.model[key]);
+    }
+    
+    PreJoindIn.saveSettings();
 };
