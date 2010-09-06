@@ -30,11 +30,30 @@ EventDetailAssistant.prototype.setup = function() {
 	    }
 	);
 	
+	this.controller.setupWidget("eventCommentsDrawer",
+	    this.eventCommentsDrawerAttributes = {
+	        modelProperty: 'open',
+	        unstyled: true
+	    },
+	    this.eventCommentsDrawerModel = {
+	        open: false
+	    }
+	);
+	
 	this.controller.setupWidget("talksProgressSpinner",
 	    this.talksProgressSpinnerAttributes = {
 	        spinnerSize: 'large'
 	    },
 	    this.talksProgressSpinnerModel = {
+	        spinning: false
+	    }
+	);
+	
+	this.controller.setupWidget("eventCommentsProgressSpinner",
+	    this.eventCommentsProgressSpinnerAttributes = {
+	        spinnerSize: 'large'
+	    },
+	    this.eventCommentsProgressSpinnerModel = {
 	        spinning: false
 	    }
 	);
@@ -53,6 +72,24 @@ EventDetailAssistant.prototype.setup = function() {
 	        }
 	    },
 	    this.eventTalksListModel = {items: []}
+	);
+	
+	
+	this.controller.setupWidget("eventCommentsList",
+	    this.eventCommentsListAttributes = {
+	        itemTemplate: "event-detail/eventCommentsList-item",
+	        emptyTemplate: "event-detail/eventCommentsList-empty",
+	        formatters: {
+	            uname: function(value, model) {
+	                if( !value )
+	                    model.uname = 'anonymous';
+	            }
+	        }
+	    },
+	    this.eventCommentsListModel = {
+	        items: [],
+	        disabled: true
+	    }
 	);
 	
 	$('#eventDetailHeader').html(
@@ -80,6 +117,12 @@ EventDetailAssistant.prototype.setup = function() {
 	    this.controller.get('eventDescriptionDivider'),
 	    Mojo.Event.tap,
 	    this.toggleDrawer.bindAsEventListener(this, 'eventDescriptionDivider', 'eventDescriptionDrawer')
+	);
+
+   	this.controller.listen(
+	    this.controller.get('eventCommentsDivider'),
+	    Mojo.Event.tap,
+	    this.toggleCommentsDrawer.bindAsEventListener(this, 'talkCommentsDivider', 'talkCommentsDrawer')
 	);
     
     this.controller.listen("eventTalksList", Mojo.Event.listTap, this.viewTalkDetails.bindAsEventListener(this));
@@ -118,6 +161,17 @@ EventDetailAssistant.prototype.toggleDrawer = function(event, dividerId, drawerI
     }
 };
 
+EventDetailAssistant.prototype.toggleCommentsDrawer = function(event, dividerId, drawerId) {
+    var drawer = this.controller.get(drawerId);
+    
+    if( drawer.mojo.getOpenState() == false && !this.comments_data ) {
+        this.refreshComments();
+    }
+    
+    this.toggleDrawer(event, dividerId, drawerId);
+};
+
+
 EventDetailAssistant.prototype.showTalksProgressSpinner = function() {
     this.talksProgressSpinnerModel.spinning = true;
     this.controller.modelChanged(this.talksProgressSpinnerModel);
@@ -126,6 +180,16 @@ EventDetailAssistant.prototype.showTalksProgressSpinner = function() {
 EventDetailAssistant.prototype.hideTalksProgressSpinner = function () {
     this.talksProgressSpinnerModel.spinning = false;
     this.controller.modelChanged(this.talksProgressSpinnerModel);
+};
+
+EventDetailAssistant.prototype.showCommentsProgressSpinner = function() {
+    this.eventCommentsProgressSpinnerModel.spinning = true;
+    this.controller.modelChanged(this.eventCommentsProgressSpinnerModel);
+};
+
+EventDetailAssistant.prototype.hideCommentsProgressSpinner = function () {
+    this.eventCommentsProgressSpinnerModel.spinning = false;
+    this.controller.modelChanged(this.eventCommentsProgressSpinnerModel);
 };
 
 EventDetailAssistant.prototype.refreshTalks = function() {
@@ -178,4 +242,41 @@ EventDetailAssistant.prototype.viewTalkDetails = function(talk) {
         name: 'talk-detail', 
         templateModel: item
     }, item);
+};
+
+
+EventDetailAssistant.prototype.refreshComments = function() {
+    this.showCommentsProgressSpinner();
+    
+    PreJoindIn.getInstance().getEventComments({
+        event_id: this.event_data.ID,
+        onSuccess: this.fetchEventCommentsSuccess.bind(this),
+        onFailure: this.fetchEventCommentsFailure.bind(this)
+    });
+};
+
+EventDetailAssistant.prototype.fetchEventCommentsSuccess = function(data) {
+    this.hideCommentsProgressSpinner();
+    
+    this.eventCommentsListModel.items = [];
+    
+    if( data.msg ) {
+        Mojo.Controller.errorDialog(data.msg);
+        return;
+    }
+    
+    var that = this;
+    data.each(function(comment) {
+        that.eventCommentsListModel.items.push(comment);
+    });
+    
+    this.comments_data = this.eventCommentsListModel.items;
+    
+    this.controller.modelChanged(this.eventCommentsListModel);
+};
+
+EventDetailAssistant.prototype.fetchEventCommentsFailure = function(xhr, msg, exec) {
+    this.hideCommentsProgressSpinner();
+    
+    Mojo.Controller.errorDialog(msg);
 };
