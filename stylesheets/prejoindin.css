@@ -47,11 +47,7 @@ body.palm-default {
 }
 
 .eventTypePopup {
-    top: 10px;
-    left: 35%;
-    
-    margin: 0;
-    padding: 0;
+    top: 10px !important;
 }
 
 /* ** EVENT DETAIL ** */

@@ -78,7 +78,6 @@ MainAssistant.prototype.setEventType = function(event) {
     this.controller.popupSubmenu({
         onChoose: this.setEventTypePopupChoose.bind(this),
         placeNear: this.controller.get('eventTypeButton'),
-        manualPlacement: true,
         popupClass: 'eventTypePopup',
         items: [
             {icon: '', command: 'past', label: 'Past', chosen: this.currentFilter == 'past' ? true : false},
