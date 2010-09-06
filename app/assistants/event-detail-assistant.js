@@ -1,5 +1,7 @@
 function EventDetailAssistant(event_data) {
-	   this.event_data = event_data;
+    scene_helpers.addCommonSceneMethods(this);
+    
+    this.event_data = event_data;
 }
 
 EventDetailAssistant.prototype.setup = function() {
@@ -21,8 +23,8 @@ EventDetailAssistant.prototype.setup = function() {
 	);
 	
 	/* setup widgets here */
-	this.controller.setupWidget(Mojo.Menu.appMenu, PreJoindIn.appMenuAttributes, PreJoindIn.appMenuModel);
-	
+    this.initAppMenu();
+    
 	this.controller.setupWidget("eventTalksDrawer",
 	    this.eventTalksDrawerAttributes = {
 	        modelProperty: 'open',
