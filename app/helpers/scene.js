@@ -6,7 +6,7 @@ scene_helpers.addCommonSceneMethods = function(assistant) {
 
 		var default_items = [
 			Mojo.Menu.editItem,
-            {label: $L("Preferences..."), command: "do-settings"},
+            {label: $L("Preferences..."), command: "do-preferences"},
             {label: $L("About..."), command: "do-about"}
 		];
 

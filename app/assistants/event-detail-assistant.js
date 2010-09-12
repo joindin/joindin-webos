@@ -18,7 +18,13 @@ EventDetailAssistant.prototype.setup = function() {
 	$('#eventDescriptionDrawer').html(
 	    Mojo.View.render({
 	        object: this.event_data,
-	        template: 'event-detail/event-detail-descriptionTemplate'
+	        template: 'event-detail/event-detail-descriptionTemplate',
+	        formatters: {
+	            event_desc: function(value, model) {
+	                if( value )
+	                    model.event_desc = Mojo.Format.runTextIndexer(value);
+	            }
+	        }
 	    })
 	);
 	

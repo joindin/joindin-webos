@@ -43,7 +43,7 @@ PreJoindIn.getSettings = function() {
     return this._settings;
 };
 
-PreJoindIn.saveSettings = function() {
+PreJoindIn.saveSettings = function(successCallback, failureCallback) {
     if( !this._settingsDbLoaded ) {
         Mojo.Log.info("Settings DB Not Loaded, Not Saving...");
         return false;
@@ -52,8 +52,18 @@ PreJoindIn.saveSettings = function() {
     this._settingsDb.add(
         'settings', 
         this.getSettings(), 
-        this._saveSettingsDbSuccess.bind(this),
-        this._saveSettingsDbFailure.bind(this)
+        function(event) {
+            if( successCallback )
+                successCallback(event);
+            
+            this._saveSettingsDbSuccess(event);
+        }.bind(this),
+        function(event) {
+            if( failureCallback )
+                failureCallback(event);
+                
+            this._saveSettingsDbFailure(event);
+        }.bind(this)   
     );
 };
 

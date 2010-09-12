@@ -90,6 +90,10 @@ TalkDetailAssistant.prototype.setup = function() {
 	            uname: function(value, model) {
 	                if( !value )
 	                    model.uname = 'anonymous';
+	            },
+	            talk_desc: function(value, model) {
+	                if( value )
+	                    model.talk_desc = Mojo.Format.runTextIndexer(value);
 	            }
 	        }
 	    },

@@ -1,0 +1,33 @@
+<div id="palm-dialog-content" class="palm-dialog-content">
+	<div id="dialog-title" class="dialog-title" x-mojo-loc="">
+		#{title}
+	</div>         
+	<div class="palm-dialog-separator"></div>
+	
+    <div class="palm-group unlabeled">
+        <div class="palm-list">
+            <div class="first palm-row">
+            <div class="palm-row-wrapper textfield-group" x-mojo-focus-highlight="true">
+                <div class="title">
+                    <div class="label">Username</div>
+                    <div x-mojo-element="TextField" id="accountDialogInputUserName" class="accountDialogInputUserName" name="accountDialogInputUserName"></div>
+                </div>
+            </div>
+            </div>
+
+            <div class="last palm-row">
+            <div class="palm-row-wrapper textfield-group" x-mojo-focus-highlight="true">
+                <div class="title">
+                    <div class="label">Password</div>
+                    <div x-mojo-element="PasswordField" id="accountDialogInputPassword" class="accountDialogInputPassword" name="accountDialogInputPassword"></div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="palm-dialog-buttons">
+	<div x-mojo-element="Button" id="accountDialogSaveButton" class="accountDialogSaveButton" name="accountDialogSaveButton"></div>
+	<div x-mojo-element="Button" id="accountDialogCancelButton" class="accountDialogCancelButton" name="accountDialogCancelButton"></div>
+</div>
