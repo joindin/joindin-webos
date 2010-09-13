@@ -7,8 +7,6 @@ function PreferencesAssistant() {
 PreferencesAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
 	this.model = {
-	    username: PreJoindIn.getSetting('username'),
-	    password: PreJoindIn.getSetting('password')
     };
 		
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
@@ -73,19 +71,18 @@ PreferencesAssistant.prototype.cleanup = function(event) {
 };
 
 PreferencesAssistant.prototype.reflectCurrentSettings = function() {
-	if( !this.model.username ) {
-	    $('#removeAccountButton').hide();
-	    
+	if( !PreJoindIn.getSetting('username') ) {
 	    this.accountButtonModel.label = 'Login';
 	    this.controller.modelChanged(this.accountButtonModel);
+   	    
+   	    $('#removeAccountButton').hide();
+	    $('#accountButton').show();
 	} else {
-	    $('#removeAccountButton').show();
-	    
-	    this.accountButtonModel.label = 'Manage Account';
-	    this.controller.modelChanged(this.accountButtonModel);
-	    
-	    this.removeAccountButtonModel.label = 'Logout "' + this.model.username + '"';
+	    this.removeAccountButtonModel.label = 'Logout "' + PreJoindIn.getSetting('username') + '"';
 	    this.controller.modelChanged(this.removeAccountButtonModel);
+  	    
+  	    $('#removeAccountButton').show();
+	    $('#accountButton').hide();
 	}
 };
 
@@ -151,6 +148,10 @@ function Preferences_AccountDialogAssistant(sceneAssistant, data, callBackFunc) 
 
 Preferences_AccountDialogAssistant.prototype.setup = function(widget) {
     this.widget = widget;
+    this.model = {
+	    username: PreJoindIn.getSetting('username'),
+	    password: PreJoindIn.getSetting('password') ? '******' : null
+    };
     
 	this.sceneAssistant.controller.setupWidget("accountDialogSaveButton",
 	    this.saveButtonAttributes = {
@@ -181,7 +182,7 @@ Preferences_AccountDialogAssistant.prototype.setup = function(widget) {
             autoFocus: false,
             modelProperty: 'username'
         },
-        this.sceneAssistant.model
+        this.model
     );
 
     this.sceneAssistant.controller.setupWidget("accountDialogInputPassword",
@@ -191,7 +192,7 @@ Preferences_AccountDialogAssistant.prototype.setup = function(widget) {
             autoFocus: false,
             modelProperty: 'password'
         },
-        this.sceneAssistant.model
+        this.model
     );
 	
 	
@@ -257,8 +258,43 @@ Preferences_AccountDialogAssistant.prototype.stopListeningForChanges = function(
 	);
 };
 
+Preferences_AccountDialogAssistant.prototype.saveCredentials = function() {
+    if( this.model.username || this.model.password ) {
+        PreJoindIn.setSetting('username', this.model.username);
+        if( this.model.password != '******' )
+            PreJoindIn.setSetting('password', sc.helpers.MD5(this.model.password));
+    } else {
+        PreJoindIn.setSetting('username', null);
+        PreJoindIn.setSetting('password', null);
+    }
+    PreJoindIn.saveSettings();
+    PreJoindIn.reloadInstance();
+};
+
 Preferences_AccountDialogAssistant.prototype.saveButtonTap = function() {
-    this.sceneAssistant.triggerSave();
+    PreJoindIn.getInstance().validateUser({
+        uid: this.model.username,
+        pass: sc.helpers.MD5(this.model.password ? this.model.password : ''),
+        onSuccess: function(data) {
+            
+            if( data.msg == 'success' ) {
+                this.saveCredentials();
+                this.closeDialog();
+            } else {
+                this.sceneAssistant.controller.showAlertDialog({
+                    title: $L("Invalid User Credentials"),
+                    message: $L("The user credentials you provided were invalid"),
+                    choices: [
+                        {label: $L("OK"), value: true}
+                    ]
+                });
+            }
+            
+        }.bind(this),
+        onFailure: function(url, xhr, msg) {
+            Mojo.Controller.errorDialog("ERROR: " + msg);
+        }.bind(this)
+    })
     
     this.closeDialog();
 };
@@ -269,5 +305,6 @@ Preferences_AccountDialogAssistant.prototype.cancelButtonTap = function() {
 
 Preferences_AccountDialogAssistant.prototype.closeDialog = function() {
     //this.callBackFunc();
+    this.sceneAssistant.reflectCurrentSettings();
 	this.widget.mojo.close();
 };

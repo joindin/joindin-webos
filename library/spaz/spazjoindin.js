@@ -38,7 +38,17 @@ sc.events.joindinGetTalkCommentsSuccess = 'joinedinGetTalkCommentsSuccess';
 sc.events.joindinGetTalkCommentsFailure = 'joinedinGetTalkCommentsFailure';
 //COMMENTS
 //USER
+sc.events.joindinGetUserDetailSuccess = 'joindinGetUserDetailSuccess';
+sc.events.joindinGetUserDetailFailure = 'joindinGetUserDetailFailure';
+sc.events.joindinGetUserCommentsSuccess = 'joindinGetUserCommentsSuccess';
+sc.events.joindinGetUserCommentsFailure = 'joindinGetUserCommentsFailure';
+sc.events.joindinValidateUserSuccess = 'joindinValidateUserSuccess';
+sc.events.joindinValidateUserFailure = 'joindinValidateUserFailure';
+sc.events.joindinGetSpeakerProfileSuccess = 'joindinGetSpeakerProfileSuccess';
+sc.events.joindinGetSpeakerProfileFailure = 'joindinGetSpeakerProfileFailure';
 //SITE
+sc.events.joindinGetSiteStatusSuccess = 'joindinGetSiteStatusSuccess';
+sc.events.joindinGetSiteStatusFailure = 'joindinGetSiteStatusFailure';
 
 /**
  * @constructor
@@ -52,12 +62,12 @@ function SpazJoindIn(opts) {
 	opts = sch.defaults({
         username: null,
         password: null,
-        baseURL: 'http://test.joind.in/api',
+        baseURL: 'http://joind.in/api',
         eventTarget: document
 	}, opts);
 	
 	this.setCredentials(opts.username, opts.password);
-	this.baseURL  = opts.baseURL;
+	this.setBaseURL(opts.baseURL);
     this.eventTarget = opts.eventTarget;
 }
 
@@ -86,8 +96,27 @@ SpazJoindIn.prototype.getCredentials = function() {
     }
 };
 
+/**
+ * Returns TRUE if credentials are set, FALSE if not
+ * @returns {boolean}
+ */
 SpazJoindIn.prototype.hasCredentials = function() {
-    return this.username || this.password;
+    return this.username || this.password ? true : false;
+};
+
+/**
+ * Clears existing credentials
+ */
+SpazJoindIn.prototype.clearCredentials = function() {
+    this.setCredentials(null, null);
+};
+
+/**
+ * Sets the Joind.In base URL. DO NOT INCLUDE THE TRAILING /
+ * @param {string}
+ */
+SpazJoindIn.prototype.setBaseURL = function(baseURL) {
+    this.baseURL = baseURL;
 };
 
 /**
@@ -328,6 +357,174 @@ SpazJoindIn.prototype.getTalkComments = function(opts) {
         auth: false,
         successEvent: sc.events.joindinGetTalkCommentsSuccess,
         failureEvent: sc.events.joindinGetTalkCommentsFailure,
+        onSuccess: opts.onSuccess,
+        onFailure: opts.onFailure
+    });
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// COMMENTS //////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Get User Detail
+ * @param {Object} opts options for the method call
+ * @param {integer} [opts.uid] user ID number
+ * @param {function} [opts.onSuccess]
+ * @param {function} [opts.onFailure]
+ */
+SpazJoindIn.prototype.getUserDetail = function(opts) {
+    opts = sch.defaults({
+        uid: null,
+        onSuccess: null,
+        onFailure: null
+    }, opts);
+
+    this._callMethod({
+        namespace: 'user',
+        action: {
+            type: 'getdetail',
+            data: {
+                uid: opts.uid
+            }
+        },
+        auth: false,
+        successEvent: sc.events.joindinGetUserDetailSuccess,
+        failureEvent: sc.events.joindinGetUserDetailFailure,
+        onSuccess: opts.onSuccess,
+        onFailure: opts.onFailure
+    });
+};
+
+/**
+ * Get User Comments
+ * @param {Object} opts options for the method call
+ * @param {string} [opts.username]
+ * @param {string} [opts.type] type of comments to retrieve, 'event' or 'talk'
+ * @param {function} [opts.onSuccess]
+ * @param {function} [opts.onFailure]
+ */
+SpazJoindIn.prototype.getUserComments = function(opts) {
+    opts = sch.defaults({
+        username: null,
+        type: null,
+        onSuccess: null,
+        onFailure: null
+    }, opts);
+
+    this._callMethod({
+        namespace: 'user',
+        action: {
+            type: 'getcomments',
+            data: {
+                username: opts.username,
+                type: opts.type
+            }
+        },
+        auth: false,
+        successEvent: sc.events.joindinGetUserCommentsSuccess,
+        failureEvent: sc.events.joindinGetUserCommentsFailure,
+        onSuccess: opts.onSuccess,
+        onFailure: opts.onFailure
+    });
+};
+
+/**
+ * Validate User
+ * @param {Object} opts options for the method call
+ * @param {string} [opts.uid] Username
+ * @param {string} [opts.pass] 
+ * @param {function} [opts.onSuccess]
+ * @param {function} [opts.onFailure]
+ */
+SpazJoindIn.prototype.validateUser = function(opts) {
+    opts = sch.defaults({
+        uid: null,
+        pass: null,
+        onSuccess: null,
+        onFailure: null
+    }, opts);
+
+    this._callMethod({
+        namespace: 'user',
+        action: {
+            type: 'validate',
+            data: {
+                uid: opts.uid,
+                pass: opts.pass
+            }
+        },
+        auth: false,
+        successEvent: sc.events.joindinValidateUserSuccess,
+        failureEvent: sc.events.joindinValidateUserFailure,
+        onSuccess: opts.onSuccess,
+        onFailure: opts.onFailure
+    });
+};
+
+/**
+ * 
+ * @param {Object} opts options for the method call
+ * @param {integer} [opts.spid] speaker ID
+ * @param {function} [opts.onSuccess]
+ * @param {function} [opts.onFailure]
+ */
+SpazJoindIn.prototype.getSpeakerProfile = function(opts) {
+    opts = sch.defaults({
+        spid: null,
+        onSuccess: null,
+        onFailure: null
+    }, opts);
+
+    this._callMethod({
+        namespace: 'user',
+        action: {
+            type: 'getprofile',
+            data: {
+                spid: opts.spid
+            }
+        },
+        auth: false,
+        successEvent: sc.events.joindinGetSpeakerProfileSuccess,
+        failureEvent: sc.events.joindinGetSpeakerProfileFailure,
+        onSuccess: opts.onSuccess,
+        onFailure: opts.onFailure
+    });
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SITE //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Test the connection to Joind.In, if Joind.In is up it will echo the provided test string.
+ * @param {Object} opts options for the method call
+ * @param {integer} [opts.test_string] a string to be echo'ed back
+ * @param {function} [opts.onSuccess]
+ * @param {function} [opts.onFailure]
+ */
+SpazJoindIn.prototype.getSiteStatus = function(opts) {
+    opts = sch.defaults({
+        test_string: null,
+        onSuccess: null,
+        onFailure: null
+    }, opts);
+
+    this._callMethod({
+        namespace: 'site',
+        action: {
+            type: 'status',
+            data: {
+                test_string: opts.test_string
+            }
+        },
+        auth: false,
+        successEvent: sc.events.joindinGetSiteStatusSuccess,
+        failureEvent: sc.events.joindinGetSiteStatusFailure,
         onSuccess: opts.onSuccess,
         onFailure: opts.onFailure
     });

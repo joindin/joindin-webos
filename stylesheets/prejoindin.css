@@ -66,6 +66,11 @@ body.palm-default {
     margin: 0 15px 0 15px;
 }
 
+/* ** PREFERENCES ** */
+#removeAccountButton .palm-button-wrapper{
+    text-transform: none !important;
+}
+
 .comment .comment-body {
     white-space: pre-wrap;
 }
