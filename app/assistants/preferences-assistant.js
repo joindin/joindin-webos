@@ -7,6 +7,7 @@ function PreferencesAssistant() {
 PreferencesAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
 	this.model = {
+	    defaultEventSort: PreJoindIn.getSetting('defaultEventSort', 'hot')
     };
 		
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
@@ -38,6 +39,16 @@ PreferencesAssistant.prototype.setup = function() {
 	    }
 	);
 	
+	this.controller.setupWidget("defaultSortSelector",
+	    this.defaultSortSelectorAttributes = {
+	        choices: [],
+	        label: "Default Sort",
+	        modelProperty: "defaultEventSort",
+	        disabledProperty: "defaultEventSortDisabled"
+	    },
+	    this.model
+	);
+	
 	/* add event handlers to listen to events from widgets */
 	this.controller.listen(
 	    "accountButton",
@@ -49,6 +60,12 @@ PreferencesAssistant.prototype.setup = function() {
 	    "removeAccountButton",
 	    Mojo.Event.tap,
 	    this.logoutAccountButtonTap.bindAsEventListener(this)
+	);
+	
+	this.controller.listen(
+	    "defaultSortSelector",
+	    Mojo.Event.propertyChange,
+	    this.triggerSave.bind(this)
 	);
 	
 	this.reflectCurrentSettings();
@@ -71,6 +88,8 @@ PreferencesAssistant.prototype.cleanup = function(event) {
 };
 
 PreferencesAssistant.prototype.reflectCurrentSettings = function() {
+    PreJoindIn.reloadInstance();
+    
 	if( !PreJoindIn.getSetting('username') ) {
 	    this.accountButtonModel.label = 'Login';
 	    this.controller.modelChanged(this.accountButtonModel);
@@ -84,6 +103,24 @@ PreferencesAssistant.prototype.reflectCurrentSettings = function() {
   	    $('#removeAccountButton').show();
 	    $('#accountButton').hide();
 	}
+	
+	this.defaultSortSelectorAttributes.choices = [
+        {label: "Past", value: "past"},
+        {label: "Hot", value: "hot"},
+        {label: "Upcoming", value: "upcoming"}
+	];
+	
+	if( PreJoindIn.getInstance().hasCredentials() ) {
+	    this.defaultSortSelectorAttributes.choices.push({
+	        label: "Attending",
+	        value: "attending"
+	    });
+	} else if( this.model.defaultEventSort == 'attending' ) {
+	    this.model.defaultEventSort = 'hot';
+	    this.triggerSingleSave('defaultEventSort');
+	}
+	
+	this.controller.modelChanged(this.model);
 };
 
 PreferencesAssistant.prototype.triggerSave = function() {
@@ -91,12 +128,39 @@ PreferencesAssistant.prototype.triggerSave = function() {
         PreJoindIn.setSetting(key, this.model[key]);
     }
     
-    this.settingsAltered = true;
+    PreJoindIn.saveSettings(
+        function(event) {
+            //Success
+            this.settingsAltered = true;
+            
+            this.reflectCurrentSettings();
+        }.bind(this),
+        function(event) {
+            Mojo.Controller.errorDialog("Error Saving Settings...");
+        }.bind(this)
+    );
+};
+
+PreferencesAssistant.prototype.triggerSingleSave = function(setting, reflect) {
+    if( setting ) {
+        try {
+            PreJoindIn.setSetting(setting, this.model[setting]);
+        } catch(e) {
+            PreJoindIn.setSetting(setting, null);
+        }
+    } else {
+        for( key in this.model ) {
+            PreJoindIn.setSetting(key, this.model[key]);
+        }
+    }
     
     PreJoindIn.saveSettings(
         function(event) {
             //Success
-            this.reflectCurrentSettings();
+            this.settingsAltered = true;
+            
+            if( reflect )
+                this.reflectCurrentSettings();
         }.bind(this),
         function(event) {
             Mojo.Controller.errorDialog("Error Saving Settings...");
@@ -116,15 +180,20 @@ PreferencesAssistant.prototype.logoutAccountButtonTap = function() {
     this.controller.showAlertDialog({
         onChoose: function(remove) {
             if( remove ) {
-                this.model.username = null;
-                this.model.password = null;
+                PreJoindIn.setSetting('username', null);
+                PreJoindIn.setSetting('password', null);
                 
-                this.triggerSave();
-                
-                $('#removeAccountButton').hide();
-                
-                this.accountButtonModel.label = 'Setup Account';
-                this.controller.modelChanged(this.accountButtonModel);
+                PreJoindIn.saveSettings(
+                    function(event) {
+                        //Success
+                        this.settingsAltered = true;
+
+                        this.reflectCurrentSettings();
+                    }.bind(this),
+                    function(event) {
+                        Mojo.Controller.errorDialog("Error Saving User Account...");
+                    }.bind(this)
+                );
             } else {
                 //Do Nothing
             }

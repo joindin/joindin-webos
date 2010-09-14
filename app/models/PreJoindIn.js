@@ -6,7 +6,8 @@ PreJoindIn._settingsDb = null;
 PreJoindIn._settingsDbLoaded = false;
 PreJoindIn._settings = {
     username: null,
-    password: null
+    password: null,
+    defaultEventsort: 'hot'
 };
     
 PreJoindIn.getInstance = function() {
@@ -33,10 +34,12 @@ PreJoindIn.setSettings = function(object) {
 };
 
 PreJoindIn.getSetting = function(key, defaultReturn) {
-    if( this._settings[key] )
+    try {
         return this._settings[key];
-    else
+    }
+    catch(e) {
         return defaultReturn;
+    }
 };
 
 PreJoindIn.getSettings = function() {
@@ -75,7 +78,7 @@ PreJoindIn._saveSettingsDbFailure = function(event) {
     Mojo.Log.info("Failed to save settings %j", event);
 };
 
-PreJoindIn.loadSettingsDb = function() {
+PreJoindIn.loadSettingsDb = function(onSuccess, onFailure) {
     if( !this._settingsDb ) {
         this._settingsDb = new Mojo.Depot(
             {
@@ -83,8 +86,18 @@ PreJoindIn.loadSettingsDb = function() {
                 version: Mojo.appInfo.version,
                 displayName: Mojo.appInfo.title + " prefs DB"
             }, 
-            this._loadSettingsDbSuccess.bind(this), 
-            this._loadSettingsFailure.bind(this)
+            function(event) {
+                this._loadSettingsDbSuccess(event);
+                
+                if( typeof onSuccess == 'function' )
+                    onSuccess(event);
+            }.bind(this),
+            function(event) {
+                this._loadSettingsFailure(event);
+                
+                if( typeof onFailure == 'function' )
+                    onFailure(event);
+            }.bind(this)
         );
     }
     

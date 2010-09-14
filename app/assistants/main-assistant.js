@@ -40,7 +40,9 @@ MainAssistant.prototype.setup = function() {
 	);
 	
 	/* add event handlers to listen to events from widgets */
-	Mojo.Event.listen(document, 'settingsChanged', function() { this.updateEventList(this.currentFilter, true); }.bind(this));
+	Mojo.Event.listen(document, 'settingsChanged', function() {
+	    this.updateEventList(this.currentFilter, true); 
+	}.bind(this));
 	
 	this.controller.listen("eventList", Mojo.Event.listTap, this.viewEventDetails.bindAsEventListener(this));
 	this.controller.listen("eventFilter", Mojo.Event.filter, this.filterEventList.bindAsEventListener(this));
@@ -48,7 +50,7 @@ MainAssistant.prototype.setup = function() {
 	this.controller.listen("eventTypeButton", Mojo.Event.tap, this.setEventType.bindAsEventListener(this));
 	
 	/* load initial data */
-	this.updateEventList('hot', true);
+	this.updateEventList(PreJoindIn.getSetting('defaultEventSort', 'hot'), true);
 };
 
 MainAssistant.prototype.activate = function(event) {
@@ -74,19 +76,33 @@ MainAssistant.prototype.setEventTypePopupChoose = function(command) {
 };
 
 MainAssistant.prototype.setEventType = function(event) {
+    var popupItems =  [
+        {icon: '', command: 'past', label: 'Past', chosen: this.currentFilter == 'past' ? true : false},
+        {icon: '', command: 'hot', label: 'Hot', chosen: this.currentFilter == 'hot' ? true : false},
+        {icon: '', command: 'upcoming', label: 'Upcoming', chosen: this.currentFilter == 'upcoming' ? true : false}
+    ];
+    
+    if( PreJoindIn.getInstance().hasCredentials() ) {
+        popupItems.push({
+            icon: '',
+            command: 'attending',
+            label: 'Attending',
+            chosen: this.currentFilter == 'attending' ? true : false
+        })
+    }
+    
     this.controller.popupSubmenu({
         onChoose: this.setEventTypePopupChoose.bind(this),
         placeNear: this.controller.get('eventTypeButton'),
         popupClass: 'eventTypePopup',
-        items: [
-            {icon: '', command: 'past', label: 'Past', chosen: this.currentFilter == 'past' ? true : false},
-            {icon: '', command: 'hot', label: 'Hot', chosen: this.currentFilter == 'hot' ? true : false},
-            {icon: '', command: 'upcoming', label: 'Upcoming', chosen: this.currentFilter == 'upcoming' ? true : false}
-        ]
+        items: popupItems
     });
 };
 
 MainAssistant.prototype.updateEventList = function(type, force) {
+    if( type == 'attending' && !PreJoindIn.getInstance().hasCredentials() )
+        type = PreJoindIn.getSetting('defaultEventSort', 'hot');
+    
     if( this.currentFilter == type && !force )
         return;
     
@@ -94,20 +110,83 @@ MainAssistant.prototype.updateEventList = function(type, force) {
 
     this.setCurrentFilter(type);
     
-    PreJoindIn.getInstance().getEventListing({
-        type: type,
-        onSuccess: function(data) {
-            this.fetchEventListSuccess(data, type);
-        }.bind(this),
-        onFailure: this.fetchEventListFailure.bind(this)
+    if( type == 'attending' ) {
+        this.getEventListAttending();
+    } else {
+        PreJoindIn.getInstance().getEventListing({
+            type: type,
+            onSuccess: function(data) {
+                this.fetchEventListSuccess(data, type);
+            }.bind(this),
+            onFailure: this.fetchEventListFailure.bind(this)
+        });
+    }
+};
+
+MainAssistant.prototype.getEventListAttending = function() {
+    var eventLists = {
+        past: [],
+        upcoming: []
+    };
+    
+    var synchronizer = new Mojo.Function.Synchronize({
+        syncCallback: function() {
+            var data = [].concat(eventLists.past, eventLists.upcoming);
+            
+            data = data.findAll(function(event){
+                return event.user_attending == 1 ? true : false;
+            });
+            
+            data.sort(function(a, b){
+                try {
+                    return parseInt(a.event_start) > parseInt(b.event_start);
+                } catch(e) {
+                    return null;
+                }
+            }).reverse(); //For some reason just doing a < comparison fails, so call reverse() instead
+            
+            this.eventListModel.items = this.processRawEventList(data);
+
+            this.controller.modelChanged(this.eventListModel);
+            this.controller.getSceneScroller().mojo.revealTop();
+
+            this.hideSpinner();
+        }.bind(this)
     });
+    
+    PreJoindIn.getInstance().getEventListing({
+        type: 'past',
+        onSuccess: synchronizer.wrap(function(data){
+            eventLists.past = data;
+        }.bind(this)),
+        onFailure: function() {
+            Mojo.Log.error("Failed retrieving past events for 'Attending' list...");
+        }.bind(this)
+    });
+    
+    PreJoindIn.getInstance().getEventListing({
+        type: 'upcoming',
+        onSuccess: synchronizer.wrap(function(data){
+            eventLists.upcoming = data;
+        }.bind(this)),
+        onFailure: function() {
+            Mojo.Log.error("Failed retrieving upcoming events for 'Attending' list...");
+        }.bind(this)
+    });
+    
 };
 
 MainAssistant.prototype.fetchEventListSuccess = function(data, type) {
-    this.eventListModel.items = [];
+    this.eventListModel.items = this.processRawEventList(data);
     
-    var that = this;
-    data.each(function(event) {
+    this.controller.modelChanged(this.eventListModel);
+    this.controller.getSceneScroller().mojo.revealTop();
+    
+    this.hideSpinner();
+};
+
+MainAssistant.prototype.processRawEventList = function(data) {
+    data.each(function(event, index) {
         if( parseInt(event.event_start) )
             var event_start = new Date(parseInt(event.event_start) * 1000);
             
@@ -140,13 +219,10 @@ MainAssistant.prototype.fetchEventListSuccess = function(data, type) {
             event_range: event_range
         };
         
-        that.eventListModel.items.push(event);
+        data[index] = event;
     });
     
-    this.controller.modelChanged(this.eventListModel);
-    this.controller.getSceneScroller().mojo.revealTop();
-    
-    this.hideSpinner();
+    return data;
 };
 
 MainAssistant.prototype.fetchEventListFailure = function(xhr, msg, exec) {
