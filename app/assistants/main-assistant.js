@@ -145,7 +145,11 @@ MainAssistant.prototype.getEventListAttending = function() {
                 }
             }).reverse(); //For some reason just doing a < comparison fails, so call reverse() instead
             
-            this.eventListModel.items = this.processRawEventList(data);
+            if( data.msg ) {
+                Mojo.Controller.errorDialog(data.msg);
+            } else {
+                this.eventListModel.items = this.processRawEventList(data);
+            }
 
             this.controller.modelChanged(this.eventListModel);
             this.controller.getSceneScroller().mojo.revealTop();
@@ -177,7 +181,11 @@ MainAssistant.prototype.getEventListAttending = function() {
 };
 
 MainAssistant.prototype.fetchEventListSuccess = function(data, type) {
-    this.eventListModel.items = this.processRawEventList(data);
+    if( data.msg ) {
+        Mojo.Controller.errorDialog(data.msg);
+    } else {
+        this.eventListModel.items = this.processRawEventList(data);
+    }
     
     this.controller.modelChanged(this.eventListModel);
     this.controller.getSceneScroller().mojo.revealTop();

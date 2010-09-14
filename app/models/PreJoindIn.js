@@ -87,16 +87,10 @@ PreJoindIn.loadSettingsDb = function(onSuccess, onFailure) {
                 displayName: Mojo.appInfo.title + " prefs DB"
             }, 
             function(event) {
-                this._loadSettingsDbSuccess(event);
-                
-                if( typeof onSuccess == 'function' )
-                    onSuccess(event);
+                this._loadSettingsDbSuccess(event, onSuccess, onFailure);
             }.bind(this),
             function(event) {
-                this._loadSettingsFailure(event);
-                
-                if( typeof onFailure == 'function' )
-                    onFailure(event);
+                this._loadSettingsFailure(event, onFailure);
             }.bind(this)
         );
     }
@@ -104,21 +98,28 @@ PreJoindIn.loadSettingsDb = function(onSuccess, onFailure) {
     return this._settingsDb;
 };
 
-PreJoindIn._loadSettingsDbSuccess = function(event) {
+PreJoindIn._loadSettingsDbSuccess = function(event, onSuccess, onFailure) {
     this._settingsDbLoaded = true;
     
     this.loadSettingsDb().get(
         'settings', 
-        this._loadSettingsSuccess.bind(this), 
-        this._loadSettingsFailure.bind(this)
+        function(event) {
+            this._loadSettingsSuccess(event, onSuccess);
+        }.bind(this), 
+        function(event) {
+            this._loadSettingsFailure(event, onFailure);
+        }.bind(this)
     );
 };
 
-PreJoindIn._loadSettingsFailure = function(event) {
-    Mojo.Log.info("Settings DB Failed %j", event);
+PreJoindIn._loadSettingsFailure = function(event, callback) {
+    Mojo.Log.error("Settings DB Failed %j", event);
+    
+    if( typeof callback == 'function')
+        callback(event);
 };
 
-PreJoindIn._loadSettingsSuccess = function(args) {
+PreJoindIn._loadSettingsSuccess = function(args, callback) {
     if( args ) {
         for( key in args ) {
             this.setSetting(key, args[key]);
@@ -126,4 +127,7 @@ PreJoindIn._loadSettingsSuccess = function(args) {
     }
     
     Mojo.Log.info("Loaded Preferences...");
+    
+    if( typeof callback == 'function' )
+        callback(args);
 };
