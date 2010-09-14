@@ -267,6 +267,7 @@ Preferences_AccountDialogAssistant.prototype.saveCredentials = function() {
         PreJoindIn.setSetting('username', null);
         PreJoindIn.setSetting('password', null);
     }
+    
     PreJoindIn.saveSettings();
     PreJoindIn.reloadInstance();
 };
