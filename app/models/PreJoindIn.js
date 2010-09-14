@@ -34,21 +34,31 @@ PreJoindIn.setSettings = function(object) {
 };
 
 PreJoindIn.getSetting = function(key, defaultReturn) {
-    try {
+    if( key in this._settings )
         return this._settings[key];
-    }
-    catch(e) {
+    else
         return defaultReturn;
-    }
 };
 
 PreJoindIn.getSettings = function() {
     return this._settings;
 };
 
-PreJoindIn.saveSettings = function(successCallback, failureCallback) {
-    if( !this._settingsDbLoaded ) {
-        Mojo.Log.info("Settings DB Not Loaded, Not Saving...");
+PreJoindIn.saveSettings = function(successCallback, failureCallback, noReload) {
+    if( !this._settingsDbLoaded && !noReload ) {
+        Mojo.Log.info("Settings not loaded, attempting reload...");
+        this.loadSettingsDb(
+            function() {
+                Mojo.Log.info("Settings reloaded!");
+                this.saveSettings(successCallback, failureCallback, true);
+            }.bind(this), 
+            function() {
+                Mojo.Log.error("Settings DB Not Loaded, Not Saving...");
+            }.bind(this)
+        );
+        return;
+    } else if( !this._settingsDbLoaded && noReload ) {
+        Mojo.Log.error("Settings not loaded, refusing to save.");
         return false;
     }
         
@@ -83,7 +93,7 @@ PreJoindIn.loadSettingsDb = function(onSuccess, onFailure) {
         this._settingsDb = new Mojo.Depot(
             {
                 name: Mojo.appInfo.id + ".prefs",
-                version: Mojo.appInfo.version,
+                version: '0.1.5', //Mojo.appInfo.version,
                 displayName: Mojo.appInfo.title + " prefs DB"
             }, 
             function(event) {
@@ -114,6 +124,9 @@ PreJoindIn._loadSettingsDbSuccess = function(event, onSuccess, onFailure) {
 
 PreJoindIn._loadSettingsFailure = function(event, callback) {
     Mojo.Log.error("Settings DB Failed %j", event);
+    
+    this._settingsDbLoaded = false;
+    this._settingsDb = null;
     
     if( typeof callback == 'function')
         callback(event);

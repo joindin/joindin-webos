@@ -143,11 +143,10 @@ PreferencesAssistant.prototype.triggerSave = function() {
 
 PreferencesAssistant.prototype.triggerSingleSave = function(setting, reflect) {
     if( setting ) {
-        try {
+        if( setting in this.model )
             PreJoindIn.setSetting(setting, this.model[setting]);
-        } catch(e) {
+        else
             PreJoindIn.setSetting(setting, null);
-        }
     } else {
         for( key in this.model ) {
             PreJoindIn.setSetting(key, this.model[key]);

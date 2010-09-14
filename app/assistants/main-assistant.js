@@ -50,6 +50,7 @@ MainAssistant.prototype.setup = function() {
 	this.controller.listen("eventTypeButton", Mojo.Event.tap, this.setEventType.bindAsEventListener(this));
 	
 	/* load initial data */
+	Mojo.Log.error("Getting Default Sort:", PreJoindIn.getSetting('defaultEventSort', 'hot'));
 	this.updateEventList(PreJoindIn.getSetting('defaultEventSort', 'hot'), true);
 };
 
