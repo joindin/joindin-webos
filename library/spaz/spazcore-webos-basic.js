@@ -1,4 +1,4 @@
-/*********** Built 2010-09-06 16:13:52 CDT ***********/
+/*********** Built 2011-01-21 09:51:44 CST ***********/
 /*jslint 
 browser: true,
 nomen: false,
@@ -64,18 +64,17 @@ onevar: false
  */
  
 /**
- * 
- * @namespace root namespace for SpazCore
+ * @namespace 
  */
 var sc = {};
 
 /**
- * @namespace namespace for app-specific stuff
+ * @namespace
  */
 sc.app = {};
 
 /**
- * @namespace namespace for helper methods
+ * @namespace
  */
 sc.helpers = {};
 
@@ -2780,62 +2779,80 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
         };
     }
 })();
-// Underscore.js
-// (c) 2009 Jeremy Ashkenas, DocumentCloud Inc.
-// Underscore is freely distributable under the terms of the MIT license.
-// Portions of Underscore are inspired by or borrowed from Prototype.js,
-// Oliver Steele's Functional, and John Resig's Micro-Templating.
-// For all details and documentation:
-// http://documentcloud.github.com/underscore/
+//     (c) 2010 Jeremy Ashkenas, DocumentCloud Inc.
+//     Underscore is freely distributable under the MIT license.
+//     Portions of Underscore are inspired or borrowed from Prototype,
+//     Oliver Steele's Functional, and John Resig's Micro-Templating.
+//     For all details and documentation:
+//     http://documentcloud.github.com/underscore
 
 (function() {
 
-  /*------------------------- Baseline setup ---------------------------------*/
+  // Baseline setup
+  // --------------
 
-  // Establish the root object, "window" in the browser, or "global" on the server.
+  // Establish the root object, `window` in the browser, or `global` on the server.
   var root = this;
 
-  // Save the previous value of the "_" variable.
+  // Save the previous value of the `_` variable.
   var previousUnderscore = root._;
-
-  // If Underscore is called as a function, it returns a wrapped object that
-  // can be used OO-style. This wrapper holds altered versions of all the
-  // underscore functions. Wrapped objects may be chained.
-  var wrapper = function(obj) { this._wrapped = obj; };
 
   // Establish the object that gets thrown to break out of a loop iteration.
   var breaker = typeof StopIteration !== 'undefined' ? StopIteration : '__break__';
 
-  // Create a safe reference to the Underscore object for reference below.
-  var _ = root._ = function(obj) { return new wrapper(obj); };
-
-  // Export the Underscore object for CommonJS.
-  if (typeof exports !== 'undefined') exports._ = _;
+  // Save bytes in the minified (but not gzipped) version:
+  var ArrayProto = Array.prototype, ObjProto = Object.prototype;
 
   // Create quick reference variables for speed access to core prototypes.
-  var slice                 = Array.prototype.slice,
-      unshift               = Array.prototype.unshift,
-      toString              = Object.prototype.toString,
-      hasOwnProperty        = Object.prototype.hasOwnProperty,
-      propertyIsEnumerable  = Object.prototype.propertyIsEnumerable;
+  var slice                 = ArrayProto.slice,
+      unshift               = ArrayProto.unshift,
+      toString              = ObjProto.toString,
+      hasOwnProperty        = ObjProto.hasOwnProperty,
+      propertyIsEnumerable  = ObjProto.propertyIsEnumerable;
+
+  // All **ECMAScript 5** native function implementations that we hope to use
+  // are declared here.
+  var
+    nativeForEach      = ArrayProto.forEach,
+    nativeMap          = ArrayProto.map,
+    nativeReduce       = ArrayProto.reduce,
+    nativeReduceRight  = ArrayProto.reduceRight,
+    nativeFilter       = ArrayProto.filter,
+    nativeEvery        = ArrayProto.every,
+    nativeSome         = ArrayProto.some,
+    nativeIndexOf      = ArrayProto.indexOf,
+    nativeLastIndexOf  = ArrayProto.lastIndexOf,
+    nativeIsArray      = Array.isArray,
+    nativeKeys         = Object.keys;
+
+  // Create a safe reference to the Underscore object for use below.
+  var _ = function(obj) { return new wrapper(obj); };
+
+  // Export the Underscore object for **CommonJS**.
+  if (typeof exports !== 'undefined') exports._ = _;
+
+  // Export Underscore to the global scope.
+  root._ = _;
 
   // Current version.
-  _.VERSION = '0.5.1';
+  _.VERSION = '1.1.2';
 
-  /*------------------------ Collection Functions: ---------------------------*/
+  // Collection Functions
+  // --------------------
 
-  // The cornerstone, an each implementation.
-  // Handles objects implementing forEach, arrays, and raw objects.
-  _.each = function(obj, iterator, context) {
-    var index = 0;
+  // The cornerstone, an `each` implementation, aka `forEach`.
+  // Handles objects implementing `forEach`, arrays, and raw objects.
+  // Delegates to **ECMAScript 5**'s native `forEach` if available.
+  var each = _.each = _.forEach = function(obj, iterator, context) {
     try {
-      if (obj.forEach) {
+      if (nativeForEach && obj.forEach === nativeForEach) {
         obj.forEach(iterator, context);
-      } else if (_.isArray(obj) || _.isArguments(obj)) {
-        for (var i=0, l=obj.length; i<l; i++) iterator.call(context, obj[i], i, obj);
+      } else if (_.isNumber(obj.length)) {
+        for (var i = 0, l = obj.length; i < l; i++) iterator.call(context, obj[i], i, obj);
       } else {
-        var keys = _.keys(obj), l = keys.length;
-        for (var i=0; i<l; i++) iterator.call(context, obj[keys[i]], keys[i], obj);
+        for (var key in obj) {
+          if (hasOwnProperty.call(obj, key)) iterator.call(context, obj[key], key, obj);
+        }
       }
     } catch(e) {
       if (e != breaker) throw e;
@@ -2843,42 +2860,45 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return obj;
   };
 
-  // Return the results of applying the iterator to each element. Use JavaScript
-  // 1.6's version of map, if possible.
+  // Return the results of applying the iterator to each element.
+  // Delegates to **ECMAScript 5**'s native `map` if available.
   _.map = function(obj, iterator, context) {
-    if (obj && _.isFunction(obj.map)) return obj.map(iterator, context);
+    if (nativeMap && obj.map === nativeMap) return obj.map(iterator, context);
     var results = [];
-    _.each(obj, function(value, index, list) {
-      results.push(iterator.call(context, value, index, list));
+    each(obj, function(value, index, list) {
+      results[results.length] = iterator.call(context, value, index, list);
     });
     return results;
   };
 
-  // Reduce builds up a single result from a list of values. Also known as
-  // inject, or foldl. Uses JavaScript 1.8's version of reduce, if possible.
-  _.reduce = function(obj, memo, iterator, context) {
-    if (obj && _.isFunction(obj.reduce)) return obj.reduce(_.bind(iterator, context), memo);
-    _.each(obj, function(value, index, list) {
+  // **Reduce** builds up a single result from a list of values, aka `inject`,
+  // or `foldl`. Delegates to **ECMAScript 5**'s native `reduce` if available.
+  _.reduce = _.foldl = _.inject = function(obj, iterator, memo, context) {
+    if (nativeReduce && obj.reduce === nativeReduce) {
+      if (context) iterator = _.bind(iterator, context);
+      return obj.reduce(iterator, memo);
+    }
+    each(obj, function(value, index, list) {
       memo = iterator.call(context, memo, value, index, list);
     });
     return memo;
   };
 
-  // The right-associative version of reduce, also known as foldr. Uses
-  // JavaScript 1.8's version of reduceRight, if available.
-  _.reduceRight = function(obj, memo, iterator, context) {
-    if (obj && _.isFunction(obj.reduceRight)) return obj.reduceRight(_.bind(iterator, context), memo);
-    var reversed = _.clone(_.toArray(obj)).reverse();
-    _.each(reversed, function(value, index) {
-      memo = iterator.call(context, memo, value, index, obj);
-    });
-    return memo;
+  // The right-associative version of reduce, also known as `foldr`.
+  // Delegates to **ECMAScript 5**'s native `reduceRight` if available.
+  _.reduceRight = _.foldr = function(obj, iterator, memo, context) {
+    if (nativeReduceRight && obj.reduceRight === nativeReduceRight) {
+      if (context) iterator = _.bind(iterator, context);
+      return obj.reduceRight(iterator, memo);
+    }
+    var reversed = (_.isArray(obj) ? obj.slice() : _.toArray(obj)).reverse();
+    return _.reduce(reversed, iterator, memo, context);
   };
 
-  // Return the first value which passes a truth test.
-  _.detect = function(obj, iterator, context) {
+  // Return the first value which passes a truth test. Aliased as `detect`.
+  _.find = _.detect = function(obj, iterator, context) {
     var result;
-    _.each(obj, function(value, index, list) {
+    each(obj, function(value, index, list) {
       if (iterator.call(context, value, index, list)) {
         result = value;
         _.breakLoop();
@@ -2887,13 +2907,14 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return result;
   };
 
-  // Return all the elements that pass a truth test. Use JavaScript 1.6's
-  // filter(), if it exists.
-  _.select = function(obj, iterator, context) {
-    if (obj && _.isFunction(obj.filter)) return obj.filter(iterator, context);
+  // Return all the elements that pass a truth test.
+  // Delegates to **ECMAScript 5**'s native `filter` if available.
+  // Aliased as `select`.
+  _.filter = _.select = function(obj, iterator, context) {
+    if (nativeFilter && obj.filter === nativeFilter) return obj.filter(iterator, context);
     var results = [];
-    _.each(obj, function(value, index, list) {
-      iterator.call(context, value, index, list) && results.push(value);
+    each(obj, function(value, index, list) {
+      if (iterator.call(context, value, index, list)) results[results.length] = value;
     });
     return results;
   };
@@ -2901,65 +2922,67 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
   // Return all the elements for which a truth test fails.
   _.reject = function(obj, iterator, context) {
     var results = [];
-    _.each(obj, function(value, index, list) {
-      !iterator.call(context, value, index, list) && results.push(value);
+    each(obj, function(value, index, list) {
+      if (!iterator.call(context, value, index, list)) results[results.length] = value;
     });
     return results;
   };
 
-  // Determine whether all of the elements match a truth test. Delegate to
-  // JavaScript 1.6's every(), if it is present.
-  _.all = function(obj, iterator, context) {
+  // Determine whether all of the elements match a truth test.
+  // Delegates to **ECMAScript 5**'s native `every` if available.
+  // Aliased as `all`.
+  _.every = _.all = function(obj, iterator, context) {
     iterator = iterator || _.identity;
-    if (obj && _.isFunction(obj.every)) return obj.every(iterator, context);
+    if (nativeEvery && obj.every === nativeEvery) return obj.every(iterator, context);
     var result = true;
-    _.each(obj, function(value, index, list) {
+    each(obj, function(value, index, list) {
       if (!(result = result && iterator.call(context, value, index, list))) _.breakLoop();
     });
     return result;
   };
 
-  // Determine if at least one element in the object matches a truth test. Use
-  // JavaScript 1.6's some(), if it exists.
-  _.any = function(obj, iterator, context) {
+  // Determine if at least one element in the object matches a truth test.
+  // Delegates to **ECMAScript 5**'s native `some` if available.
+  // Aliased as `any`.
+  _.some = _.any = function(obj, iterator, context) {
     iterator = iterator || _.identity;
-    if (obj && _.isFunction(obj.some)) return obj.some(iterator, context);
+    if (nativeSome && obj.some === nativeSome) return obj.some(iterator, context);
     var result = false;
-    _.each(obj, function(value, index, list) {
+    each(obj, function(value, index, list) {
       if (result = iterator.call(context, value, index, list)) _.breakLoop();
     });
     return result;
   };
 
-  // Determine if a given value is included in the array or object,
-  // based on '==='.
-  _.include = function(obj, target) {
-    if (_.isArray(obj)) return _.indexOf(obj, target) != -1;
+  // Determine if a given value is included in the array or object using `===`.
+  // Aliased as `contains`.
+  _.include = _.contains = function(obj, target) {
+    if (nativeIndexOf && obj.indexOf === nativeIndexOf) return obj.indexOf(target) != -1;
     var found = false;
-    _.each(obj, function(value) {
+    each(obj, function(value) {
       if (found = value === target) _.breakLoop();
     });
     return found;
   };
 
-  // Invoke a method with arguments on every item in a collection.
+  // Invoke a method (with arguments) on every item in a collection.
   _.invoke = function(obj, method) {
-    var args = _.rest(arguments, 2);
+    var args = slice.call(arguments, 2);
     return _.map(obj, function(value) {
       return (method ? value[method] : value).apply(value, args);
     });
   };
 
-  // Convenience version of a common use case of map: fetching a property.
+  // Convenience version of a common use case of `map`: fetching a property.
   _.pluck = function(obj, key) {
     return _.map(obj, function(value){ return value[key]; });
   };
 
-  // Return the maximum item or (item-based computation).
+  // Return the maximum element or (element-based computation).
   _.max = function(obj, iterator, context) {
     if (!iterator && _.isArray(obj)) return Math.max.apply(Math, obj);
     var result = {computed : -Infinity};
-    _.each(obj, function(value, index, list) {
+    each(obj, function(value, index, list) {
       var computed = iterator ? iterator.call(context, value, index, list) : value;
       computed >= result.computed && (result = {value : value, computed : computed});
     });
@@ -2970,14 +2993,14 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
   _.min = function(obj, iterator, context) {
     if (!iterator && _.isArray(obj)) return Math.min.apply(Math, obj);
     var result = {computed : Infinity};
-    _.each(obj, function(value, index, list) {
+    each(obj, function(value, index, list) {
       var computed = iterator ? iterator.call(context, value, index, list) : value;
       computed < result.computed && (result = {value : value, computed : computed});
     });
     return result.value;
   };
 
-  // Sort the object's values by a criteria produced by an iterator.
+  // Sort the object's values by a criterion produced by an iterator.
   _.sortBy = function(obj, iterator, context) {
     return _.pluck(_.map(obj, function(value, index, list) {
       return {
@@ -3002,13 +3025,13 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return low;
   };
 
-  // Convert anything iterable into a real, live array.
+  // Safely convert anything iterable into a real, live array.
   _.toArray = function(iterable) {
     if (!iterable)                return [];
     if (iterable.toArray)         return iterable.toArray();
     if (_.isArray(iterable))      return iterable;
     if (_.isArguments(iterable))  return slice.call(iterable);
-    return _.map(iterable, function(val){ return val; });
+    return _.values(iterable);
   };
 
   // Return the number of elements in an object.
@@ -3016,20 +3039,21 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return _.toArray(obj).length;
   };
 
-  /*-------------------------- Array Functions: ------------------------------*/
+  // Array Functions
+  // ---------------
 
-  // Get the first element of an array. Passing "n" will return the first N
-  // values in the array. Aliased as "head". The "guard" check allows it to work
-  // with _.map.
-  _.first = function(array, n, guard) {
+  // Get the first element of an array. Passing **n** will return the first N
+  // values in the array. Aliased as `head`. The **guard** check allows it to work
+  // with `_.map`.
+  _.first = _.head = function(array, n, guard) {
     return n && !guard ? slice.call(array, 0, n) : array[0];
   };
 
-  // Returns everything but the first entry of the array. Aliased as "tail".
-  // Especially useful on the arguments object. Passing an "index" will return
-  // the rest of the values in the array from that index onward. The "guard"
-   //check allows it to work with _.map.
-  _.rest = function(array, index, guard) {
+  // Returns everything but the first entry of the array. Aliased as `tail`.
+  // Especially useful on the arguments object. Passing an **index** will return
+  // the rest of the values in the array from that index onward. The **guard**
+  // check allows it to work with `_.map`.
+  _.rest = _.tail = function(array, index, guard) {
     return slice.call(array, _.isUndefined(index) || guard ? 1 : index);
   };
 
@@ -3040,39 +3064,40 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
 
   // Trim out all falsy values from an array.
   _.compact = function(array) {
-    return _.select(array, function(value){ return !!value; });
+    return _.filter(array, function(value){ return !!value; });
   };
 
   // Return a completely flattened version of an array.
   _.flatten = function(array) {
-    return _.reduce(array, [], function(memo, value) {
+    return _.reduce(array, function(memo, value) {
       if (_.isArray(value)) return memo.concat(_.flatten(value));
-      memo.push(value);
+      memo[memo.length] = value;
       return memo;
-    });
+    }, []);
   };
 
   // Return a version of the array that does not contain the specified value(s).
   _.without = function(array) {
-    var values = _.rest(arguments);
-    return _.select(array, function(value){ return !_.include(values, value); });
+    var values = slice.call(arguments, 1);
+    return _.filter(array, function(value){ return !_.include(values, value); });
   };
 
   // Produce a duplicate-free version of the array. If the array has already
   // been sorted, you have the option of using a faster algorithm.
-  _.uniq = function(array, isSorted) {
-    return _.reduce(array, [], function(memo, el, i) {
-      if (0 == i || (isSorted === true ? _.last(memo) != el : !_.include(memo, el))) memo.push(el);
+  // Aliased as `unique`.
+  _.uniq = _.unique = function(array, isSorted) {
+    return _.reduce(array, function(memo, el, i) {
+      if (0 == i || (isSorted === true ? _.last(memo) != el : !_.include(memo, el))) memo[memo.length] = el;
       return memo;
-    });
+    }, []);
   };
 
   // Produce an array that contains every item shared between all the
   // passed-in arrays.
   _.intersect = function(array) {
-    var rest = _.rest(arguments);
-    return _.select(_.uniq(array), function(item) {
-      return _.all(rest, function(other) {
+    var rest = slice.call(arguments, 1);
+    return _.filter(_.uniq(array), function(item) {
+      return _.every(rest, function(other) {
         return _.indexOf(other, item) >= 0;
       });
     });
@@ -3081,78 +3106,93 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
   // Zip together multiple lists into a single array -- elements that share
   // an index go together.
   _.zip = function() {
-    var args = _.toArray(arguments);
+    var args = slice.call(arguments);
     var length = _.max(_.pluck(args, 'length'));
     var results = new Array(length);
-    for (var i=0; i<length; i++) results[i] = _.pluck(args, String(i));
+    for (var i = 0; i < length; i++) results[i] = _.pluck(args, "" + i);
     return results;
   };
 
-  // If the browser doesn't supply us with indexOf (I'm looking at you, MSIE),
+  // If the browser doesn't supply us with indexOf (I'm looking at you, **MSIE**),
   // we need this function. Return the position of the first occurence of an
   // item in an array, or -1 if the item is not included in the array.
+  // Delegates to **ECMAScript 5**'s native `indexOf` if available.
   _.indexOf = function(array, item) {
-    if (array.indexOf) return array.indexOf(item);
-    for (var i=0, l=array.length; i<l; i++) if (array[i] === item) return i;
+    if (nativeIndexOf && array.indexOf === nativeIndexOf) return array.indexOf(item);
+    for (var i = 0, l = array.length; i < l; i++) if (array[i] === item) return i;
     return -1;
   };
 
-  // Provide JavaScript 1.6's lastIndexOf, delegating to the native function,
-  // if possible.
+
+  // Delegates to **ECMAScript 5**'s native `lastIndexOf` if available.
   _.lastIndexOf = function(array, item) {
-    if (array.lastIndexOf) return array.lastIndexOf(item);
+    if (nativeLastIndexOf && array.lastIndexOf === nativeLastIndexOf) return array.lastIndexOf(item);
     var i = array.length;
     while (i--) if (array[i] === item) return i;
     return -1;
   };
 
   // Generate an integer Array containing an arithmetic progression. A port of
-  // the native Python range() function. See:
-  // http://docs.python.org/library/functions.html#range
+  // the native Python `range()` function. See
+  // [the Python documentation](http://docs.python.org/library/functions.html#range).
   _.range = function(start, stop, step) {
-    var a     = _.toArray(arguments);
-    var solo  = a.length <= 1;
-    var start = solo ? 0 : a[0], stop = solo ? a[0] : a[1], step = a[2] || 1;
-    var len   = Math.ceil((stop - start) / step);
-    if (len <= 0) return [];
-    var range = new Array(len);
-    for (var i = start, idx = 0; true; i += step) {
-      if ((step > 0 ? i - stop : stop - i) >= 0) return range;
-      range[idx++] = i;
+    var args  = slice.call(arguments),
+        solo  = args.length <= 1,
+        start = solo ? 0 : args[0],
+        stop  = solo ? args[0] : args[1],
+        step  = args[2] || 1,
+        len   = Math.max(Math.ceil((stop - start) / step), 0),
+        idx   = 0,
+        range = new Array(len);
+    while (idx < len) {
+      range[idx++] = start;
+      start += step;
     }
+    return range;
   };
 
-  /* ----------------------- Function Functions: -----------------------------*/
+  // Function (ahem) Functions
+  // ------------------
 
-  // Create a function bound to a given object (assigning 'this', and arguments,
-  // optionally). Binding with arguments is also known as 'curry'.
+  // Create a function bound to a given object (assigning `this`, and arguments,
+  // optionally). Binding with arguments is also known as `curry`.
   _.bind = function(func, obj) {
-    var args = _.rest(arguments, 2);
+    var args = slice.call(arguments, 2);
     return function() {
-      return func.apply(obj || root, args.concat(_.toArray(arguments)));
+      return func.apply(obj || {}, args.concat(slice.call(arguments)));
     };
   };
 
   // Bind all of an object's methods to that object. Useful for ensuring that
   // all callbacks defined on an object belong to it.
   _.bindAll = function(obj) {
-    var funcs = _.rest(arguments);
+    var funcs = slice.call(arguments, 1);
     if (funcs.length == 0) funcs = _.functions(obj);
-    _.each(funcs, function(f) { obj[f] = _.bind(obj[f], obj); });
+    each(funcs, function(f) { obj[f] = _.bind(obj[f], obj); });
     return obj;
+  };
+
+  // Memoize an expensive function by storing its results.
+  _.memoize = function(func, hasher) {
+    var memo = {};
+    hasher = hasher || _.identity;
+    return function() {
+      var key = hasher.apply(this, arguments);
+      return key in memo ? memo[key] : (memo[key] = func.apply(this, arguments));
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
   _.delay = function(func, wait) {
-    var args = _.rest(arguments, 2);
+    var args = slice.call(arguments, 2);
     return setTimeout(function(){ return func.apply(func, args); }, wait);
   };
 
   // Defers a function, scheduling it to run after the current call stack has
   // cleared.
   _.defer = function(func) {
-    return _.delay.apply(_, [func, 1].concat(_.rest(arguments)));
+    return _.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
   };
 
   // Returns the first function passed as an argument to the second,
@@ -3160,7 +3200,7 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
   // conditionally execute the original function.
   _.wrap = function(func, wrapper) {
     return function() {
-      var args = [func].concat(_.toArray(arguments));
+      var args = [func].concat(slice.call(arguments));
       return wrapper.apply(wrapper, args);
     };
   };
@@ -3168,9 +3208,9 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
   // Returns a function that is the composition of a list of functions, each
   // consuming the return value of the function that follows.
   _.compose = function() {
-    var funcs = _.toArray(arguments);
+    var funcs = slice.call(arguments);
     return function() {
-      var args = _.toArray(arguments);
+      var args = slice.call(arguments);
       for (var i=funcs.length-1; i >= 0; i--) {
         args = [funcs[i].apply(this, args)];
       }
@@ -3178,13 +3218,15 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     };
   };
 
-  /* ------------------------- Object Functions: ---------------------------- */
+  // Object Functions
+  // ----------------
 
   // Retrieve the names of an object's properties.
-  _.keys = function(obj) {
-    if(_.isArray(obj)) return _.range(0, obj.length);
+  // Delegates to **ECMAScript 5**'s native `Object.keys`
+  _.keys = nativeKeys || function(obj) {
+    if (_.isArray(obj)) return _.range(0, obj.length);
     var keys = [];
-    for (var key in obj) if (hasOwnProperty.call(obj, key)) keys.push(key);
+    for (var key in obj) if (hasOwnProperty.call(obj, key)) keys[keys.length] = key;
     return keys;
   };
 
@@ -3193,21 +3235,31 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return _.map(obj, _.identity);
   };
 
-  // Return a sorted list of the function names available in Underscore.
-  _.functions = function(obj) {
-    return _.select(_.keys(obj), function(key){ return _.isFunction(obj[key]); }).sort();
+  // Return a sorted list of the function names available on the object.
+  // Aliased as `methods`
+  _.functions = _.methods = function(obj) {
+    return _.filter(_.keys(obj), function(key){ return _.isFunction(obj[key]); }).sort();
   };
 
-  // Extend a given object with all of the properties in a source object.
-  _.extend = function(destination, source) {
-    for (var property in source) destination[property] = source[property];
-    return destination;
+  // Extend a given object with all the properties in passed-in object(s).
+  _.extend = function(obj) {
+    each(slice.call(arguments, 1), function(source) {
+      for (var prop in source) obj[prop] = source[prop];
+    });
+    return obj;
   };
 
   // Create a (shallow-cloned) duplicate of an object.
   _.clone = function(obj) {
-    if (_.isArray(obj)) return obj.slice(0);
-    return _.extend({}, obj);
+    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
+  };
+
+  // Invokes interceptor with the obj, and then returns obj.
+  // The primary purpose of this method is to "tap into" a method chain, in
+  // order to perform operations on intermediate results within the chain.
+  _.tap = function(obj, interceptor) {
+    interceptor(obj);
+    return obj;
   };
 
   // Perform a deep comparison to check if two objects are equal.
@@ -3226,7 +3278,7 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     // Check dates' integer values.
     if (_.isDate(a) && _.isDate(b)) return a.getTime() === b.getTime();
     // Both are NaN?
-    if (_.isNaN(a) && _.isNaN(b)) return true;
+    if (_.isNaN(a) && _.isNaN(b)) return false;
     // Compare regular expressions.
     if (_.isRegExp(a) && _.isRegExp(b))
       return a.source     === b.source &&
@@ -3242,13 +3294,15 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     // Different object sizes?
     if (aKeys.length != bKeys.length) return false;
     // Recursive comparison of contents.
-    for (var key in a) if (!_.isEqual(a[key], b[key])) return false;
+    for (var key in a) if (!(key in b) || !_.isEqual(a[key], b[key])) return false;
     return true;
   };
 
   // Is a given array or object empty?
   _.isEmpty = function(obj) {
-    return _.keys(obj).length == 0;
+    if (_.isArray(obj) || _.isString(obj)) return obj.length === 0;
+    for (var key in obj) if (hasOwnProperty.call(obj, key)) return false;
+    return true;
   };
 
   // Is a given value a DOM element?
@@ -3256,9 +3310,45 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return !!(obj && obj.nodeType == 1);
   };
 
+  // Is a given value an array?
+  // Delegates to ECMA5's native Array.isArray
+  _.isArray = nativeIsArray || function(obj) {
+    return !!(obj && obj.concat && obj.unshift && !obj.callee);
+  };
+
   // Is a given variable an arguments object?
   _.isArguments = function(obj) {
-    return obj && _.isNumber(obj.length) && !_.isArray(obj) && !propertyIsEnumerable.call(obj, 'length');
+    return !!(obj && obj.callee);
+  };
+
+  // Is a given value a function?
+  _.isFunction = function(obj) {
+    return !!(obj && obj.constructor && obj.call && obj.apply);
+  };
+
+  // Is a given value a string?
+  _.isString = function(obj) {
+    return !!(obj === '' || (obj && obj.charCodeAt && obj.substr));
+  };
+
+  // Is a given value a number?
+  _.isNumber = function(obj) {
+    return (obj === +obj) || (toString.call(obj) === '[object Number]');
+  };
+
+  // Is a given value a boolean?
+  _.isBoolean = function(obj) {
+    return obj === true || obj === false;
+  };
+
+  // Is a given value a date?
+  _.isDate = function(obj) {
+    return !!(obj && obj.getTimezoneOffset && obj.setUTCFullYear);
+  };
+
+  // Is the given value a regular expression?
+  _.isRegExp = function(obj) {
+    return !!(obj && obj.test && obj.exec && (obj.ignoreCase || obj.ignoreCase === false));
   };
 
   // Is the given value NaN -- this one is interesting. NaN != NaN, and
@@ -3277,19 +3367,10 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return typeof obj == 'undefined';
   };
 
-  // Define the isArray, isDate, isFunction, isNumber, isRegExp, and isString
-  // functions based on their toString identifiers.
-  var types = ['Array', 'Date', 'Function', 'Number', 'RegExp', 'String'];
-  for (var i=0, l=types.length; i<l; i++) {
-    (function() {
-      var identifier = '[object ' + types[i] + ']';
-      _['is' + types[i]] = function(obj) { return toString.call(obj) == identifier; };
-    })();
-  }
+  // Utility Functions
+  // -----------------
 
-  /* -------------------------- Utility Functions: -------------------------- */
-
-  // Run Underscore.js in noConflict mode, returning the '_' variable to its
+  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
   // previous owner. Returns a reference to the Underscore object.
   _.noConflict = function() {
     root._ = previousUnderscore;
@@ -3301,9 +3382,22 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return value;
   };
 
+  // Run a function **n** times.
+  _.times = function (n, iterator, context) {
+    for (var i = 0; i < n; i++) iterator.call(context, i);
+  };
+
   // Break out of the middle of an iteration.
   _.breakLoop = function() {
     throw breaker;
+  };
+
+  // Add your own custom functions to the Underscore object, ensuring that
+  // they're correctly added to the OOP wrapper as well.
+  _.mixin = function(obj) {
+    each(_.functions(obj), function(name){
+      addToWrapper(name, _[name] = obj[name]);
+    });
   };
 
   // Generate a unique integer id (unique within the entire client session).
@@ -3314,55 +3408,67 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
     return prefix ? prefix + id : id;
   };
 
-  // JavaScript templating a-la ERB, pilfered from John Resig's
-  // "Secrets of the JavaScript Ninja", page 83.
-  _.template = function(str, data) {
-    var fn = new Function('obj',
-      'var p=[],print=function(){p.push.apply(p,arguments);};' +
-      'with(obj){p.push(\'' +
-      str
-        .replace(/[\r\t\n]/g, " ")
-        .split("<%").join("\t")
-        .replace(/((^|%>)[^\t]*)'/g, "$1\r")
-        .replace(/\t=(.*?)%>/g, "',$1,'")
-        .split("\t").join("');")
-        .split("%>").join("p.push('")
-        .split("\r").join("\\'")
-    + "');}return p.join('');");
-    return data ? fn(data) : fn;
+  // By default, Underscore uses ERB-style template delimiters, change the
+  // following template settings to use alternative delimiters.
+  _.templateSettings = {
+    evaluate    : /<%([\s\S]+?)%>/g,
+    interpolate : /<%=([\s\S]+?)%>/g
   };
 
-  /*------------------------------- Aliases ----------------------------------*/
+  // JavaScript micro-templating, similar to John Resig's implementation.
+  // Underscore templating handles arbitrary delimiters, preserves whitespace,
+  // and correctly escapes quotes within interpolated code.
+  _.template = function(str, data) {
+    var c  = _.templateSettings;
+    var tmpl = 'var __p=[],print=function(){__p.push.apply(__p,arguments);};' +
+      'with(obj||{}){__p.push(\'' +
+      str.replace(/'/g, "\\'")
+         .replace(c.interpolate, function(match, code) {
+           return "'," + code.replace(/\\'/g, "'") + ",'";
+         })
+         .replace(c.evaluate || null, function(match, code) {
+           return "');" + code.replace(/\\'/g, "'")
+                              .replace(/[\r\n\t]/g, ' ') + "__p.push('";
+         })
+         .replace(/\r/g, '\\r')
+         .replace(/\n/g, '\\n')
+         .replace(/\t/g, '\\t')
+         + "');}return __p.join('');";
+    var func = new Function('obj', tmpl);
+    return data ? func(data) : func;
+  };
 
-  _.forEach  = _.each;
-  _.foldl    = _.inject       = _.reduce;
-  _.foldr    = _.reduceRight;
-  _.filter   = _.select;
-  _.every    = _.all;
-  _.some     = _.any;
-  _.head     = _.first;
-  _.tail     = _.rest;
-  _.methods  = _.functions;
+  // The OOP Wrapper
+  // ---------------
 
-  /*------------------------ Setup the OOP Wrapper: --------------------------*/
+  // If Underscore is called as a function, it returns a wrapped object that
+  // can be used OO-style. This wrapper holds altered versions of all the
+  // underscore functions. Wrapped objects may be chained.
+  var wrapper = function(obj) { this._wrapped = obj; };
+
+  // Expose `wrapper.prototype` as `_.prototype`
+  _.prototype = wrapper.prototype;
 
   // Helper function to continue chaining intermediate results.
   var result = function(obj, chain) {
     return chain ? _(obj).chain() : obj;
   };
 
-  // Add all of the Underscore functions to the wrapper object.
-  _.each(_.functions(_), function(name) {
-    var method = _[name];
+  // A method to easily add functions to the OOP wrapper.
+  var addToWrapper = function(name, func) {
     wrapper.prototype[name] = function() {
-      unshift.call(arguments, this._wrapped);
-      return result(method.apply(_, arguments), this._chain);
+      var args = slice.call(arguments);
+      unshift.call(args, this._wrapped);
+      return result(func.apply(_, args), this._chain);
     };
-  });
+  };
+
+  // Add all of the Underscore functions to the wrapper object.
+  _.mixin(_);
 
   // Add all mutator Array functions to the wrapper.
-  _.each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {
-    var method = Array.prototype[name];
+  each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {
+    var method = ArrayProto[name];
     wrapper.prototype[name] = function() {
       method.apply(this._wrapped, arguments);
       return result(this._wrapped, this._chain);
@@ -3370,8 +3476,8 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
   });
 
   // Add all accessor Array functions to the wrapper.
-  _.each(['concat', 'join', 'slice'], function(name) {
-    var method = Array.prototype[name];
+  each(['concat', 'join', 'slice'], function(name) {
+    var method = ArrayProto[name];
     wrapper.prototype[name] = function() {
       return result(method.apply(this._wrapped, arguments), this._chain);
     };
@@ -4282,16 +4388,16 @@ onevar: false
 var sc;
  
 /*
-* makes relative time out of "Sun Jul 08 19:01:12 +0000 2007" type string
-* Borrowed from Mike Demers (slightly altered)
-* https://twitter.pbwiki.com/RelativeTimeScripts
-* 
-* This requires date.js
-* http://www.datejs.com/
-* @param {string} time_value a string to convert into relative time
-* @param {object} [labels] labels for text portions of time descriptions
-* @param {boolean} [use_dateparse] Whether or not to use the Date.parse method to parse the time_value. Default is FALSE
-*/
+ * makes relative time out of "Sun Jul 08 19:01:12 +0000 2007" type string
+ * Borrowed from Mike Demers (slightly altered)
+ * https://twitter.pbwiki.com/RelativeTimeScripts
+ * 
+ * This requires date.js
+ * http://www.datejs.com/
+ * @param {string} time_value a string to convert into relative time
+ * @param {object} [labels] labels for text portions of time descriptions
+ * @param {boolean} [use_dateparse] Whether or not to use the Date.parse method to parse the time_value. Default is FALSE
+ */
 sc.helpers.getRelativeTime = function(time_value, labels, use_dateparse) {	
 	
 	var default_labels = {
@@ -4341,13 +4447,16 @@ sc.helpers.getRelativeTime = function(time_value, labels, use_dateparse) {
 	}
 };
 
-
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.httpTimeToInt = function(entry_date, use_dateparse) {
 	return sc.helpers.dateToInt(entry_date, use_dateparse);
 };
 
 /**
  * this returns milliseconds, not seconds! 
+ * @member sc.helpers 
  */
 sc.helpers.dateToInt = function(entry_date, use_dateparse) {
 	var parsedDate = new Date();
@@ -4362,7 +4471,9 @@ sc.helpers.dateToInt = function(entry_date, use_dateparse) {
 	return parsedDate.getTime();
 };
 
-
+/**
+ * @member sc.helpers  
+ */
 sc.helpers.getTimeAsInt = function() {
 	var now = new Date();
 	return now.getTime();
@@ -4388,7 +4499,7 @@ var sc;
  * @param {Object} [scope] the scope to execute the handler within (what "this" refers to)
  * @param {boolean} [use_capture]  defaults to false
  * @returns {function} the handler that was passed -- or created, if we passed a scope. You can use this to remove the listener later on
- * @function
+ * @member sc.helpers 
  */
 sc.helpers.addListener = function(target, event_type, handler, scope, use_capture) {
 	
@@ -4399,8 +4510,8 @@ sc.helpers.addListener = function(target, event_type, handler, scope, use_captur
 		sch.warn('use_capture no longer supported!');
 	}
 	
-	sch.error('listening for '+event_type);
-	sch.error('on target nodeName:'+target.nodeName);
+	sch.debug('listening for '+event_type);
+	sch.debug('on target nodeName:'+target.nodeName);
 	
 	jQuery(target).bind(event_type, handler);
 	
@@ -4417,12 +4528,12 @@ sc.helpers.addListener = function(target, event_type, handler, scope, use_captur
  * @param {function} handler  a method that will take the event as a param, and "this" refers to target
  * @param {Object} scope the scope to execute the handler
  * @param {boolean} use_capture  defaults to false
- * @function
+ * @member sc.helpers 
  */
 sc.helpers.removeListener = function(target, event_type, handler, use_capture) {
 
-	sch.error('removing listener for '+event_type);
-	sch.error('on target nodeName:'+target.nodeName);
+	sch.debug('removing listener for '+event_type);
+	sch.debug('on target nodeName:'+target.nodeName);
 
 	if (use_capture) {
 		sch.warn('use_capture no longer supported!');
@@ -4473,20 +4584,19 @@ sc.helpers.removeDelegatedListener = function(base_target, selector, event_type,
  * @param {DOMElement}  target   the target for the event (element, window, etc)
  * @param {object}  data     data to pass with event. it is always passed as the second parameter to the handler (after the event object)
  * @param {boolean} bubble   whether the event should bubble or not. defaults to true
- * @function
+ * @member sc.helpers 
  */
 sc.helpers.triggerCustomEvent = function(event_type, target, data, bubble) {
 	
-	sch.error('triggering '+event_type);
-	sch.error('on target nodeName:'+target.nodeName);
-	sch.error('event data:');
-	// sch.error(sch.enJSON(data));
+	sch.debug('EVENT triggering '+event_type);
+	sch.debug('EVENT on target nodeName:'+target.nodeName);
 	
 	if (bubble) {
 		sch.warn('bubble is no longer supported!');
 	}
 	
 	if (data) {
+		sch.debug('EVENT data passed');
 		data = [data];
 	}
 	
@@ -4506,31 +4616,36 @@ sc.helpers.getEventData = function(event_obj) {
 
 /**
  * Alias for sc.helpers.addListener 
+ * @member sc.helpers 
  * @function
  */
 sc.helpers.listen = sc.helpers.addListener;
 
 /**
  * Alias for sc.helpers.removeListener
+ * @member sc.helpers 
  * @function
  */
 sc.helpers.unlisten = sc.helpers.removeListener;
 
 /**
  * Alias for sc.helpers.addDelegatedListener
- * @function 
+ * @member sc.helpers  
+ * @function
  */
 sc.helpers.delegate = sc.helpers.addDelegatedListener;
 
 /**
  * Alias for sc.helpers.removeDelegatedListener
- * @function 
+ * @member sc.helpers  
+ * @function
  */
 sc.helpers.undelegate = sc.helpers.removeDelegatedListener;
 
 
 /**
  * Alias for sc.helpers.triggerCustomEvent 
+ * @member sc.helpers 
  * @function
  */
 sc.helpers.trigger  = sc.helpers.triggerCustomEvent;/*jslint 
@@ -4566,15 +4681,18 @@ var sc;
 *
 *  Base64 encode / decode
 *  http://www.webtoolkit.info/
-*
+* @namespace
 **/
-
 sc.helpers.Base64 = {
 
 	// private property
 	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
 
-	// public method for encoding
+	/**
+	* public method for encoding
+	* @function
+	* @name sc.helpers.Base64.encode
+	*/
 	encode : function (input) {
 		var output = "";
 		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
@@ -4608,7 +4726,11 @@ sc.helpers.Base64 = {
 		return output;
 	},
 
-	// public method for decoding
+	/**
+	* public method for decoding
+	* @function
+	* @name sc.helpers.Base64.decode
+	*/
 	decode : function (input) {
 		var output = "";
 		var chr1, chr2, chr3;
@@ -4711,9 +4833,8 @@ sc.helpers.Base64 = {
 *
 *  Javascript crc32
 *  http://www.webtoolkit.info/
-*
+* @function
 **/
- 
 sc.helpers.crc32 = function (str) {
  
 	function Utf8Encode(string) {
@@ -4766,9 +4887,8 @@ sc.helpers.crc32 = function (str) {
 *
 *  MD5 (Message-Digest Algorithm)
 *  http://www.webtoolkit.info/
-*
+* @function
 **/
- 
 sc.helpers.MD5 = function (string) {
  
 	function RotateLeft(lValue, iShiftBits) {
@@ -4974,9 +5094,8 @@ sc.helpers.MD5 = function (string) {
 *
 *  Secure Hash Algorithm (SHA1)
 *  http://www.webtoolkit.info/
-*
+* @function
 **/
- 
 sc.helpers.SHA1 = function (msg) {
  
 	function rotate_left(n,s) {
@@ -5153,9 +5272,8 @@ sc.helpers.SHA1 = function (msg) {
 *  http://www.webtoolkit.info/
 *
 *  Original code by Angel Marin, Paul Johnston.
-*
+* @function
 **/
- 
 sc.helpers.SHA256 = function (s){
  
 	var chrsz   = 8;
@@ -5303,7 +5421,7 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*
+/**
  * Generate a random uuid.
  *
  * USAGE: Math.uuid(length, radix)
@@ -5326,7 +5444,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
  *   "47473046"
  *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
  *   "098F4D35"
- */
+ * @member sc.helpers
+ * @function
+ */
 sc.helpers.UUID = (function() {
   // Private array of chars to use
   var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
@@ -5362,7 +5482,8 @@ sc.helpers.UUID = (function() {
 
 /**
  * Checks if the given value is an RFC 4122 UUID 
- */
+ * @member sc.helpers
+ */
 sc.helpers.isUUID = function(val) {
 	return val.match(/^[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}$/);
 };
@@ -5384,6 +5505,7 @@ var sc, jQuery;
 /*
 	Return a boolean value telling whether
 	the first argument is a string.
+	* @member sc.helpers
 */
 sc.helpers.isString = function(thing) {
 	if (typeof thing === 'string') {return true;}
@@ -5394,7 +5516,9 @@ sc.helpers.isString = function(thing) {
     return false;
 };
 
-
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.isNumber = function(chk) {
 	return typeof chk === 'number';
 };
@@ -5403,6 +5527,7 @@ sc.helpers.isNumber = function(chk) {
 
 /*
 	http://www.breakingpar.com/bkp/home.nsf/0/87256B280015193F87256C720080D723
+	* @member sc.helpers
 */
 sc.helpers.isArray = function(obj) {
 	if (!obj || !obj.constructor) { // short-circuit this if it's falsey
@@ -5418,6 +5543,7 @@ sc.helpers.isArray = function(obj) {
 
 /*
 	Returns a copy of the object using the _.extend() method
+	* @member sc.helpers
 */
 sc.helpers.clone = function(oldObj) {
 	return _.extend({}/* clone */, oldObj);
@@ -5425,6 +5551,7 @@ sc.helpers.clone = function(oldObj) {
 
 /**
  * @todo 
+ * @member sc.helpers
  */
 sc.helpers.each = function(arr, f) {
 	
@@ -5438,6 +5565,7 @@ sc.helpers.each = function(arr, f) {
  * 
  * @param {object} child the child type
  * @param {object} supertype the parent we inherit from 
+ * @member sc.helpers
  */
 sc.helpers.extend = function(child, supertype)
 {
@@ -5452,6 +5580,7 @@ sc.helpers.extend = function(child, supertype)
  * @param {object} defaults the default key/val pairs
  * @param {object} passed   the values provided to the calling method
  * @returns {object} a set of key/vals that have defaults filled-in
+ * @member sc.helpers
  */
 sc.helpers.defaults = function(defaults, passed) {
 	
@@ -5480,33 +5609,53 @@ var sc;
 /* A wrapper for JSON.parse() that correct Twitter issues and perform logging if JSON data could not be parsed
  * which will help to find out what is wrong
  * @param {String} text 
+ * @member sc.helpers
  */
-sc.helpers.deJSON = function(json)
- {
+sc.helpers.deJSON = function(json) {
 
 	// Fix twitter data bug
 	// var re = new RegExp("Couldn\\'t\\ find\\ Status\\ with\\ ID\\=[0-9]+\\,", "g");
 	// json = json.replace(re, "");
-
+	var obj;
 	var done = false;
+	
 	try {
-		var obj = JSON.parse(json);
+		obj = JSON.parse(json);
 		done = true;
+	} catch(e) {
+		sch.error(e.message);
+		sch.error(e);
 	} finally {
 		if (!done) {
-			sc.helpers.dump("Could not parse JSON text " + json);
+			sch.error("Could not parse JSON text: '" + json + "'");
 		}
 	}
-
 	return obj;
 };
 
 /**
  * really just a simple wrapper for JSON.stringify	
  * @param  any js construct
- */
+ * @member sc.helpers
+ */
 sc.helpers.enJSON = function(jsobj) {
-	return JSON.stringify(jsobj);
+	// return JSON.stringify(jsobj);
+	
+	var json;
+	var done = false;
+	
+	try {
+		json = JSON.stringify(jsobj);
+		done = true;
+	} catch(e) {
+		sch.error(e.message);
+		sch.error(e);
+	} finally {
+		if (!done) {
+			sch.error("Could not stringify jsobj ("+typeof jsobj+")");
+		}
+	}
+	return json;
 };
 
 
@@ -5529,6 +5678,7 @@ sc.helpers.enJSON = function(jsobj) {
 /*
  This simple script converts XML (document of code) into a JSON object. It is the combination of 2
  'xml to json' great parsers (see below) which allows for both 'simple' and 'extended' parsing modes.
+ * @member sc.helpers
 */
 sc.helpers.xml2json = function(xml, extended) {
 	if (!xml) return {};
@@ -5704,7 +5854,8 @@ var sc;
 /**
  * Stub 
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.getCurrentLocation = function() {
 	
 };/*jslint 
@@ -5727,7 +5878,8 @@ var sc;
  * @param {string} str  the string to check
  * @param {string} sn   the screen name to look for
  * @return {boolean} 
- */
+ * @member sc.helpers
+ */
 sc.helpers.containsScreenName = function(str, sn) {
 	
 	var re = new RegExp('(?:\\s|\\b|^[[:alnum:]]|^)@('+sn+')(?:\\s|\\b|$)', 'gi');
@@ -5738,13 +5890,18 @@ sc.helpers.containsScreenName = function(str, sn) {
 	
 };
 
-sc.helpers.extractScreenNames = function(str, tpl) {
-	var re_uname = /(^|\s|\(\[|,|\.|\()@([a-zA-Z0-9_]+)([^a-zA-Z0-9_]|$)/gi;
+/**
+ * @param {string} str string to search for usernames
+ * @@param {array} without array of usernames to skip 
+ */
+sc.helpers.extractScreenNames = function(str, without) {
+    // var re_uname = /(^|\s|\(\[|,|\.|\()@([a-zA-Z0-9_]+)([^a-zA-Z0-9_]|$)/gi;
+	var re_uname = /(?:^|\s|\(\[|,|\.|\()@([a-zA-Z0-9_]+)/gi;
 	var usernames = [];
 	var ms = [];
+	var wo_args = [];
 	while (ms = re_uname.exec(str))
 	{
-		
 		/*
 			sometimes we can end up with a null instead of a blank string,
 			so we need to force the issue in javascript.
@@ -5755,16 +5912,33 @@ sc.helpers.extractScreenNames = function(str, tpl) {
 			}
 		}
 		
-		if(ms[2] != ''){
-			usernames.push(ms[2]);
+		if(ms[1] != ''){
+			usernames.push(ms[1]);
 		}
 	}
-	return usernames;
+	
+	if (usernames.length > 0) {
+		usernames = _.uniq(usernames); // make unique
+		if (sch.isString(usernames)) { // at least in webOS 1.4.5, if you only had one item it qould return as a string, not an array
+			usernames = [usernames];
+		}
+
+		if (without) { // remove any usernames we want to skip
+			wo_args = [usernames];
+			for (var i=0; i < without.length; i++) {
+				wo_args.push(without[i]);
+			}
+			usernames = _.without.apply(this, wo_args);
+		}
+	}
+	
+	return usernames||[];
 };
 
 /**
  * find URLs within the given string 
- */
+ * @member sc.helpers
+ */
 sc.helpers.extractURLs = function(str) {
 	// var wwwlinks = /(^|\s)((https?|ftp)\:\/\/)?([a-z0-9+!*(),;?&=\$_.-]+(\:[a-z0-9+!*(),;?&=\$_.-]+)?@)?([✪a-z0-9-.]*)\.([a-z]{2,3})(\:[0-9]{2,5})?(\/([a-z0-9+\$_-]\.?)+)*\/?(\?[a-z+&\$_.-][a-z0-9;:@&%=+\/\$_.-]*)?(#[a-z_.-][a-z0-9+\$_.-]*)?(\s|$)/gi;
 	var wwwlinks = /(^|\s|\(|:)(((http(s?):\/\/)|(www\.))([\w✪]+[^\s\)<]+))/gi;
@@ -5797,7 +5971,8 @@ sc.helpers.extractURLs = function(str) {
  * @param {string} str
  * @param {object} map
  * @return {string}
- */
+ * @member sc.helpers
+ */
 sc.helpers.replaceMultiple = function(str, map) {
 	for (var key in map) {
 		str = str.replace(key, map[key]);
@@ -5816,7 +5991,8 @@ sc.helpers.replaceMultiple = function(str, map) {
  * @param {boolean} extra_code  a string that will be inserted verbatim into <a> tag
  * @param {integer} maxlen  the maximum length the link description can be (the string inside the <a></a> tag)
  * @return {string}
- */
+ * @member sc.helpers
+ */
 sc.helpers.autolink = function(str, type, extra_code, maxlen) {
 	if (!type) {
 		type = 'both';
@@ -5937,7 +6113,8 @@ sc.helpers.autolink = function(str, type, extra_code, maxlen) {
  * @param {string} str
  * @param {string} tpl  default is '<a href="http://twitter.com/#username#">@#username#</a>'
  * @return {string}
- */
+ * @member sc.helpers
+ */
 sc.helpers.autolinkTwitterScreenname = function(str, tpl) {
 	if (!tpl) {
 		tpl = '<a href="http://twitter.com/#username#">@#username#</a>';
@@ -5976,7 +6153,8 @@ sc.helpers.autolinkTwitterScreenname = function(str, tpl) {
  * @param {string} str
  * @param {string} tpl  default is '<a href="http://search.twitter.com/search?q=#hashtag_enc#">##hashtag#<a/>'
  * @return {string}
- */
+ * @member sc.helpers
+ */
 sc.helpers.autolinkTwitterHashtag = function(str, tpl) {
 	if (!tpl) {
 		tpl = '<a href="http://search.twitter.com/search?q=#hashtag_enc#">##hashtag#</a>';
@@ -6028,7 +6206,8 @@ sc.helpers.autolinkTwitterHashtag = function(str, tpl) {
  *  		'tpl':'' // should contain macros '#hashtag#' and '#hashtag_enc#'
  *  	}
  *  }
- */
+ * @member sc.helpers
+ */
 sc.helpers.makeClickable = function(str, opts) {
 	var autolink_type, autolink_extra_code, autolink_maxlen, screenname_tpl, hashtag_tpl;
 	
@@ -6062,7 +6241,8 @@ sc.helpers.makeClickable = function(str, opts) {
  * Simple html tag remover
  * @param {string} str
  * @return {string}
- */
+ * @member sc.helpers
+ */
 sc.helpers.stripTags = function(str) {
 	var re = /<[^>]*>/gim;
 	str = str.replace(re, '');
@@ -6072,7 +6252,8 @@ sc.helpers.stripTags = function(str) {
 
 /**
  * Converts the following entities into regular chars: &lt; &gt; &quot; &apos;
- */
+ * @member sc.helpers
+ */
 sc.helpers.fromHTMLSpecialChars = function(str) {
 	str = str.replace(/&lt;/gi, '<');
 	sc.helpers.dump(str);
@@ -6094,235 +6275,235 @@ sc.helpers.escape_html = function(string) {
 
 
 sc.helpers.htmlspecialchars = function(string, quote_style) {
-    // http://kevin.vanzonneveld.net
-    // +   original by: Mirek Slugen
-    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // +   bugfixed by: Nathan
-    // +   bugfixed by: Arno
-    // +    revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // -    depends on: get_html_translation_table
-    // *     example 1: htmlspecialchars("<a href='test'>Test</a>", 'ENT_QUOTES');
-    // *     returns 1: '&lt;a href=&#039;test&#039;&gt;Test&lt;/a&gt;'
+	// http://kevin.vanzonneveld.net
+	// +   original by: Mirek Slugen
+	// +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	// +   bugfixed by: Nathan
+	// +   bugfixed by: Arno
+	// +	revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	// -	depends on: get_html_translation_table
+	// *	 example 1: htmlspecialchars("<a href='test'>Test</a>", 'ENT_QUOTES');
+	// *	 returns 1: '&lt;a href=&#039;test&#039;&gt;Test&lt;/a&gt;'
 
-    var histogram = {}, symbol = '', tmp_str = '', i = 0;
-    tmp_str = string.toString();
+	var histogram = {}, symbol = '', tmp_str = '', i = 0;
+	tmp_str = string.toString();
 
-    if (false === (histogram = sc.helpers._get_html_translation_table('HTML_SPECIALCHARS', quote_style))) {
-        return false;
-    }
+	if (false === (histogram = sc.helpers._get_html_translation_table('HTML_SPECIALCHARS', quote_style))) {
+		return false;
+	}
 
 	// first, do &amp;
 	tmp_str = tmp_str.split('&').join(histogram['&']);
 	
 	// then do the rest
-    for (symbol in histogram) {
+	for (symbol in histogram) {
 		if (symbol != '&') {
 			entity = histogram[symbol];
-	        tmp_str = tmp_str.split(symbol).join(entity);
+			tmp_str = tmp_str.split(symbol).join(entity);
 		}
-    }
+	}
 
-    return tmp_str;
+	return tmp_str;
 };
 
 
 
 sc.helpers.htmlentities = function(string, quote_style) {
-    // http://kevin.vanzonneveld.net
-    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // +    revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // +   improved by: nobbler
-    // +    tweaked by: Jack
-    // +   bugfixed by: Onno Marsman
-    // +    revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // -    depends on: get_html_translation_table
-    // *     example 1: htmlentities('Kevin & van Zonneveld');
-    // *     returns 1: 'Kevin &amp; van Zonneveld'
-    // *     example 2: htmlentities("foo'bar","ENT_QUOTES");
-    // *     returns 2: 'foo&#039;bar'
+	// http://kevin.vanzonneveld.net
+	// +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	// +	revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	// +   improved by: nobbler
+	// +	tweaked by: Jack
+	// +   bugfixed by: Onno Marsman
+	// +	revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	// -	depends on: get_html_translation_table
+	// *	 example 1: htmlentities('Kevin & van Zonneveld');
+	// *	 returns 1: 'Kevin &amp; van Zonneveld'
+	// *	 example 2: htmlentities("foo'bar","ENT_QUOTES");
+	// *	 returns 2: 'foo&#039;bar'
  
-    var histogram = {}, symbol = '', tmp_str = '', entity = '';
-    tmp_str = string.toString();
-    
-    if (false === (histogram = sc.helpers._get_html_translation_table('HTML_ENTITIES', quote_style))) {
-        return false;
-    }
-    
-    for (symbol in histogram) {
-        entity = histogram[symbol];
-        tmp_str = tmp_str.split(symbol).join(entity);
-    }
-    
-    return tmp_str;
+	var histogram = {}, symbol = '', tmp_str = '', entity = '';
+	tmp_str = string.toString();
+	
+	if (false === (histogram = sc.helpers._get_html_translation_table('HTML_ENTITIES', quote_style))) {
+		return false;
+	}
+	
+	for (symbol in histogram) {
+		entity = histogram[symbol];
+		tmp_str = tmp_str.split(symbol).join(entity);
+	}
+	
+	return tmp_str;
 };
 
 sc.helpers._get_html_translation_table = function(table, quote_style) {
-    // http://kevin.vanzonneveld.net
-    // +   original by: Philip Peterson
-    // +    revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // +   bugfixed by: noname
-    // +   bugfixed by: Alex
-    // +   bugfixed by: Marco
-    // +   bugfixed by: madipta
-    // %          note: It has been decided that we're not going to add global
-    // %          note: dependencies to php.js. Meaning the constants are not
-    // %          note: real constants, but strings instead. integers are also supported if someone
-    // %          note: chooses to create the constants themselves.
-    // %          note: Table from http://www.the-art-of-web.com/html/character-codes/
-    // *     example 1: get_html_translation_table('HTML_SPECIALCHARS');
-    // *     returns 1: {'"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;'}
-    
-    var entities = {}, histogram = {}, decimal = 0, symbol = '';
-    var constMappingTable = {}, constMappingQuoteStyle = {};
-    var useTable = {}, useQuoteStyle = {};
-    
-    useTable      = (table ? table.toUpperCase() : 'HTML_SPECIALCHARS');
-    useQuoteStyle = (quote_style ? quote_style.toUpperCase() : 'ENT_COMPAT');
-    
-    // Translate arguments
-    constMappingTable[0]      = 'HTML_SPECIALCHARS';
-    constMappingTable[1]      = 'HTML_ENTITIES';
-    constMappingQuoteStyle[0] = 'ENT_NOQUOTES';
-    constMappingQuoteStyle[2] = 'ENT_COMPAT';
-    constMappingQuoteStyle[3] = 'ENT_QUOTES';
-    
-    // Map numbers to strings for compatibilty with PHP constants
-    if (!isNaN(useTable)) {
-        useTable = constMappingTable[useTable];
-    }
-    if (!isNaN(useQuoteStyle)) {
-        useQuoteStyle = constMappingQuoteStyle[useQuoteStyle];
-    }
+	// http://kevin.vanzonneveld.net
+	// +   original by: Philip Peterson
+	// +	revised by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	// +   bugfixed by: noname
+	// +   bugfixed by: Alex
+	// +   bugfixed by: Marco
+	// +   bugfixed by: madipta
+	// %		  note: It has been decided that we're not going to add global
+	// %		  note: dependencies to php.js. Meaning the constants are not
+	// %		  note: real constants, but strings instead. integers are also supported if someone
+	// %		  note: chooses to create the constants themselves.
+	// %		  note: Table from http://www.the-art-of-web.com/html/character-codes/
+	// *	 example 1: get_html_translation_table('HTML_SPECIALCHARS');
+	// *	 returns 1: {'"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;'}
+	
+	var entities = [], histogram = {}, decimal = 0, symbol = '';
+	var constMappingTable = {}, constMappingQuoteStyle = {};
+	var useTable = {}, useQuoteStyle = {};
+	
+	useTable	  = (table ? table.toUpperCase() : 'HTML_SPECIALCHARS');
+	useQuoteStyle = (quote_style ? quote_style.toUpperCase() : 'ENT_COMPAT');
+	
+	// Translate arguments
+	constMappingTable[0]	  = 'HTML_SPECIALCHARS';
+	constMappingTable[1]	  = 'HTML_ENTITIES';
+	constMappingQuoteStyle[0] = 'ENT_NOQUOTES';
+	constMappingQuoteStyle[2] = 'ENT_COMPAT';
+	constMappingQuoteStyle[3] = 'ENT_QUOTES';
+	
+	// Map numbers to strings for compatibilty with PHP constants
+	if (!isNaN(useTable)) {
+		useTable = constMappingTable[useTable];
+	}
+	if (!isNaN(useQuoteStyle)) {
+		useQuoteStyle = constMappingQuoteStyle[useQuoteStyle];
+	}
  
-    if (useTable === 'HTML_SPECIALCHARS') {
-        // ascii decimals for better compatibility
-        entities['38'] = '&amp;';
-        if (useQuoteStyle !== 'ENT_NOQUOTES') {
-            entities['34'] = '&quot;';
-        }
-        if (useQuoteStyle === 'ENT_QUOTES') {
-            entities['39'] = '&#039;';
-        }
-        entities['60'] = '&lt;';
-        entities['62'] = '&gt;';
-    } else if (useTable === 'HTML_ENTITIES') {
-        // ascii decimals for better compatibility
-      entities['38']  = '&amp;';
-        if (useQuoteStyle !== 'ENT_NOQUOTES') {
-            entities['34'] = '&quot;';
-        }
-        if (useQuoteStyle === 'ENT_QUOTES') {
-            entities['39'] = '&#039;';
-        }
-      entities['60']  = '&lt;';
-      entities['62']  = '&gt;';
-      entities['160'] = '&nbsp;';
-      entities['161'] = '&iexcl;';
-      entities['162'] = '&cent;';
-      entities['163'] = '&pound;';
-      entities['164'] = '&curren;';
-      entities['165'] = '&yen;';
-      entities['166'] = '&brvbar;';
-      entities['167'] = '&sect;';
-      entities['168'] = '&uml;';
-      entities['169'] = '&copy;';
-      entities['170'] = '&ordf;';
-      entities['171'] = '&laquo;';
-      entities['172'] = '&not;';
-      entities['173'] = '&shy;';
-      entities['174'] = '&reg;';
-      entities['175'] = '&macr;';
-      entities['176'] = '&deg;';
-      entities['177'] = '&plusmn;';
-      entities['178'] = '&sup2;';
-      entities['179'] = '&sup3;';
-      entities['180'] = '&acute;';
-      entities['181'] = '&micro;';
-      entities['182'] = '&para;';
-      entities['183'] = '&middot;';
-      entities['184'] = '&cedil;';
-      entities['185'] = '&sup1;';
-      entities['186'] = '&ordm;';
-      entities['187'] = '&raquo;';
-      entities['188'] = '&frac14;';
-      entities['189'] = '&frac12;';
-      entities['190'] = '&frac34;';
-      entities['191'] = '&iquest;';
-      entities['192'] = '&Agrave;';
-      entities['193'] = '&Aacute;';
-      entities['194'] = '&Acirc;';
-      entities['195'] = '&Atilde;';
-      entities['196'] = '&Auml;';
-      entities['197'] = '&Aring;';
-      entities['198'] = '&AElig;';
-      entities['199'] = '&Ccedil;';
-      entities['200'] = '&Egrave;';
-      entities['201'] = '&Eacute;';
-      entities['202'] = '&Ecirc;';
-      entities['203'] = '&Euml;';
-      entities['204'] = '&Igrave;';
-      entities['205'] = '&Iacute;';
-      entities['206'] = '&Icirc;';
-      entities['207'] = '&Iuml;';
-      entities['208'] = '&ETH;';
-      entities['209'] = '&Ntilde;';
-      entities['210'] = '&Ograve;';
-      entities['211'] = '&Oacute;';
-      entities['212'] = '&Ocirc;';
-      entities['213'] = '&Otilde;';
-      entities['214'] = '&Ouml;';
-      entities['215'] = '&times;';
-      entities['216'] = '&Oslash;';
-      entities['217'] = '&Ugrave;';
-      entities['218'] = '&Uacute;';
-      entities['219'] = '&Ucirc;';
-      entities['220'] = '&Uuml;';
-      entities['221'] = '&Yacute;';
-      entities['222'] = '&THORN;';
-      entities['223'] = '&szlig;';
-      entities['224'] = '&agrave;';
-      entities['225'] = '&aacute;';
-      entities['226'] = '&acirc;';
-      entities['227'] = '&atilde;';
-      entities['228'] = '&auml;';
-      entities['229'] = '&aring;';
-      entities['230'] = '&aelig;';
-      entities['231'] = '&ccedil;';
-      entities['232'] = '&egrave;';
-      entities['233'] = '&eacute;';
-      entities['234'] = '&ecirc;';
-      entities['235'] = '&euml;';
-      entities['236'] = '&igrave;';
-      entities['237'] = '&iacute;';
-      entities['238'] = '&icirc;';
-      entities['239'] = '&iuml;';
-      entities['240'] = '&eth;';
-      entities['241'] = '&ntilde;';
-      entities['242'] = '&ograve;';
-      entities['243'] = '&oacute;';
-      entities['244'] = '&ocirc;';
-      entities['245'] = '&otilde;';
-      entities['246'] = '&ouml;';
-      entities['247'] = '&divide;';
-      entities['248'] = '&oslash;';
-      entities['249'] = '&ugrave;';
-      entities['250'] = '&uacute;';
-      entities['251'] = '&ucirc;';
-      entities['252'] = '&uuml;';
-      entities['253'] = '&yacute;';
-      entities['254'] = '&thorn;';
-      entities['255'] = '&yuml;';
-    } else {
-        throw Error("Table: "+useTable+' not supported');
-    }
-    
-    // ascii decimals to real symbols
-    for (decimal in entities) {
-        symbol = String.fromCharCode(decimal);
-        histogram[symbol] = entities[decimal];
-    }
-    
-    return histogram;
+	if (useTable === 'HTML_SPECIALCHARS') {
+		// ascii decimals for better compatibility
+		entities.push({'code':38, 'entity':'&amp;'});
+		if (useQuoteStyle !== 'ENT_NOQUOTES') {
+			entities.push({'code':34, 'entity':'&quot;'});
+		}
+		if (useQuoteStyle === 'ENT_QUOTES') {
+			entities.push({'code':39, 'entity':'&#039;'});
+		}
+		entities.push({'code':60, 'entity':'&lt;'});
+		entities.push({'code':62, 'entity':'&gt;'});
+	} else if (useTable === 'HTML_ENTITIES') {
+		// ascii decimals for better compatibility
+	  entities.push({'code':38, 'entity':'&amp;'});
+		if (useQuoteStyle !== 'ENT_NOQUOTES') {
+			entities.push({'code':34, 'entity':'&quot;'});
+		}
+		if (useQuoteStyle === 'ENT_QUOTES') {
+			entities.push({'code':39, 'entity':'&#039;'});
+		}
+	  entities.push({'code':60, 'entity':'&lt;'});
+	  entities.push({'code':62, 'entity':'&gt;'});
+	  entities.push({'code':160, 'entity':'&nbsp;'});
+	  entities.push({'code':161, 'entity':'&iexcl;'});
+	  entities.push({'code':162, 'entity':'&cent;'});
+	  entities.push({'code':163, 'entity':'&pound;'});
+	  entities.push({'code':164, 'entity':'&curren;'});
+	  entities.push({'code':165, 'entity':'&yen;'});
+	  entities.push({'code':166, 'entity':'&brvbar;'});
+	  entities.push({'code':167, 'entity':'&sect;'});
+	  entities.push({'code':168, 'entity':'&uml;'});
+	  entities.push({'code':169, 'entity':'&copy;'});
+	  entities.push({'code':170, 'entity':'&ordf;'});
+	  entities.push({'code':171, 'entity':'&laquo;'});
+	  entities.push({'code':172, 'entity':'&not;'});
+	  entities.push({'code':173, 'entity':'&shy;'});
+	  entities.push({'code':174, 'entity':'&reg;'});
+	  entities.push({'code':175, 'entity':'&macr;'});
+	  entities.push({'code':176, 'entity':'&deg;'});
+	  entities.push({'code':177, 'entity':'&plusmn;'});
+	  entities.push({'code':178, 'entity':'&sup2;'});
+	  entities.push({'code':179, 'entity':'&sup3;'});
+	  entities.push({'code':180, 'entity':'&acute;'});
+	  entities.push({'code':181, 'entity':'&micro;'});
+	  entities.push({'code':182, 'entity':'&para;'});
+	  entities.push({'code':183, 'entity':'&middot;'});
+	  entities.push({'code':184, 'entity':'&cedil;'});
+	  entities.push({'code':185, 'entity':'&sup1;'});
+	  entities.push({'code':186, 'entity':'&ordm;'});
+	  entities.push({'code':187, 'entity':'&raquo;'});
+	  entities.push({'code':188, 'entity':'&frac14;'});
+	  entities.push({'code':189, 'entity':'&frac12;'});
+	  entities.push({'code':190, 'entity':'&frac34;'});
+	  entities.push({'code':191, 'entity':'&iquest;'});
+	  entities.push({'code':192, 'entity':'&Agrave;'});
+	  entities.push({'code':193, 'entity':'&Aacute;'});
+	  entities.push({'code':194, 'entity':'&Acirc;'});
+	  entities.push({'code':195, 'entity':'&Atilde;'});
+	  entities.push({'code':196, 'entity':'&Auml;'});
+	  entities.push({'code':197, 'entity':'&Aring;'});
+	  entities.push({'code':198, 'entity':'&AElig;'});
+	  entities.push({'code':199, 'entity':'&Ccedil;'});
+	  entities.push({'code':200, 'entity':'&Egrave;'});
+	  entities.push({'code':201, 'entity':'&Eacute;'});
+	  entities.push({'code':202, 'entity':'&Ecirc;'});
+	  entities.push({'code':203, 'entity':'&Euml;'});
+	  entities.push({'code':204, 'entity':'&Igrave;'});
+	  entities.push({'code':205, 'entity':'&Iacute;'});
+	  entities.push({'code':206, 'entity':'&Icirc;'});
+	  entities.push({'code':207, 'entity':'&Iuml;'});
+	  entities.push({'code':208, 'entity':'&ETH;'});
+	  entities.push({'code':209, 'entity':'&Ntilde;'});
+	  entities.push({'code':210, 'entity':'&Ograve;'});
+	  entities.push({'code':211, 'entity':'&Oacute;'});
+	  entities.push({'code':212, 'entity':'&Ocirc;'});
+	  entities.push({'code':213, 'entity':'&Otilde;'});
+	  entities.push({'code':214, 'entity':'&Ouml;'});
+	  entities.push({'code':215, 'entity':'&times;'});
+	  entities.push({'code':216, 'entity':'&Oslash;'});
+	  entities.push({'code':217, 'entity':'&Ugrave;'});
+	  entities.push({'code':218, 'entity':'&Uacute;'});
+	  entities.push({'code':219, 'entity':'&Ucirc;'});
+	  entities.push({'code':220, 'entity':'&Uuml;'});
+	  entities.push({'code':221, 'entity':'&Yacute;'});
+	  entities.push({'code':222, 'entity':'&THORN;'});
+	  entities.push({'code':223, 'entity':'&szlig;'});
+	  entities.push({'code':224, 'entity':'&agrave;'});
+	  entities.push({'code':225, 'entity':'&aacute;'});
+	  entities.push({'code':226, 'entity':'&acirc;'});
+	  entities.push({'code':227, 'entity':'&atilde;'});
+	  entities.push({'code':228, 'entity':'&auml;'});
+	  entities.push({'code':229, 'entity':'&aring;'});
+	  entities.push({'code':230, 'entity':'&aelig;'});
+	  entities.push({'code':231, 'entity':'&ccedil;'});
+	  entities.push({'code':232, 'entity':'&egrave;'});
+	  entities.push({'code':233, 'entity':'&eacute;'});
+	  entities.push({'code':234, 'entity':'&ecirc;'});
+	  entities.push({'code':235, 'entity':'&euml;'});
+	  entities.push({'code':236, 'entity':'&igrave;'});
+	  entities.push({'code':237, 'entity':'&iacute;'});
+	  entities.push({'code':238, 'entity':'&icirc;'});
+	  entities.push({'code':239, 'entity':'&iuml;'});
+	  entities.push({'code':240, 'entity':'&eth;'});
+	  entities.push({'code':241, 'entity':'&ntilde;'});
+	  entities.push({'code':242, 'entity':'&ograve;'});
+	  entities.push({'code':243, 'entity':'&oacute;'});
+	  entities.push({'code':244, 'entity':'&ocirc;'});
+	  entities.push({'code':245, 'entity':'&otilde;'});
+	  entities.push({'code':246, 'entity':'&ouml;'});
+	  entities.push({'code':247, 'entity':'&divide;'});
+	  entities.push({'code':248, 'entity':'&oslash;'});
+	  entities.push({'code':249, 'entity':'&ugrave;'});
+	  entities.push({'code':250, 'entity':'&uacute;'});
+	  entities.push({'code':251, 'entity':'&ucirc;'});
+	  entities.push({'code':252, 'entity':'&uuml;'});
+	  entities.push({'code':253, 'entity':'&yacute;'});
+	  entities.push({'code':254, 'entity':'&thorn;'});
+	  entities.push({'code':255, 'entity':'&yuml;'});
+	} else {
+		throw Error("Table: "+useTable+' not supported');
+	}
+	
+	// ascii decimals to real symbols
+	for (var i=0; i < entities.length; i++) {
+		symbol = String.fromCharCode(entities[i].code);
+		histogram[symbol] = entities[i].entity;
+	}
+	
+	return histogram;
 };
 
 
@@ -6332,12 +6513,11 @@ sc.helpers._get_html_translation_table = function(table, quote_style) {
 *
 *  UTF-8 data encode / decode
 *  http://www.webtoolkit.info/
-*
+*  @namespace
 **/
- 
 sc.helpers.Utf8 = {
  
-	// public method for url encoding
+	/** @function public method for url encoding */
 	encode : function (string) {
 		string = string.replace(/\r\n/g,"\n");
 		var utftext = "";
@@ -6364,7 +6544,7 @@ sc.helpers.Utf8 = {
 		return utftext;
 	},
  
-	// public method for url decoding
+	/** @function public method for url decoding */
 	decode : function (utftext) {
 		var string = "";
 		var i = 0;
@@ -6424,10 +6604,79 @@ sc.helpers.rtrim = function (str, chars) {
 
 
 /**
+ * @param {string} input the input string
+ * @param {number} pad_length the length to pad the string
+ * @param {string} pad_string the string to pad with
+ * @param {string} pad_type STR_PAD_LEFT, STR_PAD_RIGHT, or STR_PAD_BOTH. Default is STR_PAD_RIGHT 
+ * @member sc.helpers
+ */
+sc.helpers.pad = function (input, pad_length, pad_string, pad_type) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // + namespaced by: Michael White (http://getsprink.com)
+    // +      input by: Marco van Oort
+    // +   bugfixed by: Brett Zamir (http://brett-zamir.me)
+    // *     example 1: str_pad('Kevin van Zonneveld', 30, '-=', 'STR_PAD_LEFT');
+    // *     returns 1: '-=-=-=-=-=-Kevin van Zonneveld'
+    // *     example 2: str_pad('Kevin van Zonneveld', 30, '-', 'STR_PAD_BOTH');
+    // *     returns 2: '------Kevin van Zonneveld-----'
+
+    var half = '', pad_to_go;
+
+    var str_pad_repeater = function (s, len) {
+        var collect = '', i;
+
+        while (collect.length < len) {collect += s;}
+        collect = collect.substr(0,len);
+
+        return collect;
+    };
+
+    input += '';
+    pad_string = pad_string !== undefined ? pad_string : ' ';
+    
+    if (pad_type != 'STR_PAD_LEFT' && pad_type != 'STR_PAD_RIGHT' && pad_type != 'STR_PAD_BOTH') { pad_type = 'STR_PAD_RIGHT'; }
+    if ((pad_to_go = pad_length - input.length) > 0) {
+        if (pad_type == 'STR_PAD_LEFT') { input = str_pad_repeater(pad_string, pad_to_go) + input; }
+        else if (pad_type == 'STR_PAD_RIGHT') { input = input + str_pad_repeater(pad_string, pad_to_go); }
+        else if (pad_type == 'STR_PAD_BOTH') {
+            half = str_pad_repeater(pad_string, Math.ceil(pad_to_go/2));
+            input = half + input + half;
+            input = input.substr(0, pad_length);
+        }
+    }
+
+    return input;
+};
+
+/**
+ * truncate a string to a certain length, if it exceeds that length 
+ * 
+ * @param {string} str
+ * @param {Number} limit the max length of the string
+ * @param {string} [suffix] a suffix to append to the string if it is over limit. Does not count against the limit
+ * @returns {string} the possibly modified string
+ */
+sc.helpers.truncate = function(str, limit, suffix) {
+
+	if (str.length > limit) {
+		str = str.slice(0, limit);
+		if (suffix) {
+			str = str+suffix;
+		}
+	}
+
+	return str;	
+};
+
+
+
+/**
  * @param {string} str the string in which we're converting linebreaks
  * @param {string} [breaktag] the tag used to break up lines. defaults to <br>
  * @returns {string} the string with linebreaks converted to breaktags
- */
+ * @member sc.helpers
+ */
 sc.helpers.nl2br = function(str, breaktag) {
 	
 	breaktag = breaktag || '<br>';
@@ -6452,26 +6701,64 @@ var sc;
  * NOTE: to use all these helpers, you must additionally load a platform-specific definition file!
  */
 
-
+/**
+ * @constant 
+ */
 var SPAZCORE_PLATFORM_AIR			= 'AIR';
+/**
+ * @constant 
+ */
 var SPAZCORE_PLATFORM_WEBOS		= 'webOS';
+/**
+ * @constant 
+ */
 var SPAZCORE_PLATFORM_TITANIUM	= 'Titanium';
+/**
+ * @constant 
+ */
 var SPAZCORE_PLATFORM_UNKNOWN		= '__UNKNOWN';
 
 
+/**
+ * @constant 
+ */
 var SPAZCORE_OS_WINDOWS		= 'Windows';
+/**
+ * @constant 
+ */
 var SPAZCORE_OS_LINUX		= 'Linux';
+/**
+ * @constant 
+ */
 var SPAZCORE_OS_MACOS		= 'MacOS';
+/**
+ * @constant 
+ */
 var SPAZCORE_OS_UNKNOWN		= '__OS_UNKNOWN';
 
 
 /**
  * error reporting levels 
  */
+/**
+ * @constant 
+ */
 var SPAZCORE_DUMPLEVEL_DEBUG   = 4;
+/**
+ * @constant 
+ */
 var SPAZCORE_DUMPLEVEL_NOTICE  = 3;
+/**
+ * @constant 
+ */
 var SPAZCORE_DUMPLEVEL_WARNING = 2;
+/**
+ * @constant 
+ */
 var SPAZCORE_DUMPLEVEL_ERROR   = 1;
+/**
+ * @constant 
+ */
 var SPAZCORE_DUMPLEVEL_NONE    = 0; // this means "never ever dump anything!"
 
 
@@ -6484,6 +6771,7 @@ var SPAZCORE_DUMPLEVEL_NONE    = 0; // this means "never ever dump anything!"
 * Right now these checks are really, really basic
 * 
 * @return {String} an identifier for the platform
+* @member sc.helpers
 */
 sc.helpers.getPlatform = function() {
 	if (window.runtime) {
@@ -6505,6 +6793,7 @@ sc.helpers.getPlatform = function() {
 * 
 * @param {String} str the platform you're checking for
 * 
+* @member sc.helpers
 */
 sc.helpers.isPlatform = function(str) {
 	var pform = sc.helpers.getPlatform();
@@ -6515,15 +6804,23 @@ sc.helpers.isPlatform = function(str) {
 	}
 };
 
-
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.isAIR = function() {
 	return sc.helpers.isPlatform(SPAZCORE_PLATFORM_AIR);
 };
 
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.iswebOS = function() {
 	return sc.helpers.isPlatform(SPAZCORE_PLATFORM_WEBOS);
 };
 
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.isTitanium = function() {
 	return sc.helpers.isPlatform(SPAZCORE_PLATFORM_TITANIUM);
 };
@@ -6532,28 +6829,32 @@ sc.helpers.isTitanium = function() {
 
 /**
  * Helper to send a debug dump 
- */
+ * @member sc.helpers
+ */
 sc.helpers.debug = function(obj) {
 	sc.helpers.dump(obj, SPAZCORE_DUMPLEVEL_DEBUG);
 };
 
 /**
  * helper to send a notice dump 
- */
+ * @member sc.helpers
+ */
 sc.helpers.note = function(obj) {
 	sc.helpers.dump(obj, SPAZCORE_DUMPLEVEL_NOTICE);
 };
 
 /**
  * helper to send a warn dump 
- */
+ * @member sc.helpers
+ */
 sc.helpers.warn = function(obj) {
 	sc.helpers.dump(obj, SPAZCORE_DUMPLEVEL_WARNING);
 };
 
 /**
  * helper to send an error dump 
- */
+ * @member sc.helpers
+ */
 sc.helpers.error = function(obj) {
 	sc.helpers.dump(obj, SPAZCORE_DUMPLEVEL_ERROR);
 };
@@ -6562,41 +6863,30 @@ sc.helpers.error = function(obj) {
 /**
  * A simple logging function
  * @platformstub
- */
-sc.helpers.dump = function(obj, level) {
+ * @member sc.helpers
+ */
+sc.helpers.dump = function(obj, level, cb) {
 	console.log(obj);
+	if (cb) {
+		cb(obj, level);
+	}
 };
 
 /**
  * Open a URL in the default system web browser
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.openInBrowser = function(url) {
 	window.open(url);
-};
-
-/**
- * Gets the contents of a file
- * @platformstub
- */
-sc.helpers.getFileContents = function(path) {
-	// stub
-};
-
-/**
- * Saves the contents to a specified path. Serializes a passed object if 
- * serialize == true
- * @platformstub
- */
-sc.helpers.setFileContents = function(path, content, serialize) {
-	// stub
 };
 
 
 /**
  * Returns the current application version string
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.getAppVersion = function() {
 	// stub
 };
@@ -6605,7 +6895,8 @@ sc.helpers.getAppVersion = function() {
 /**
  * Returns the user agent string for the app
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.getUserAgent = function() {
 	// stub
 };
@@ -6613,7 +6904,8 @@ sc.helpers.getUserAgent = function() {
 /**
  * Sets the user agent string for the app
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.setUserAgent = function(uastring) {
 	// stub
 };
@@ -6621,7 +6913,8 @@ sc.helpers.setUserAgent = function(uastring) {
 /**
  * Gets clipboard text
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.getClipboardText = function() {
 	// stub
 };
@@ -6629,7 +6922,8 @@ sc.helpers.getClipboardText = function() {
 /**
  * Sets clipboard text
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.setClipboardText = function(text) {
 	// stub
 };
@@ -6638,7 +6932,8 @@ sc.helpers.setClipboardText = function(text) {
 /**
  * Loads a value for a key from EncryptedLocalStore
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.getEncryptedValue = function(key) {
 	// stub
 };
@@ -6646,7 +6941,8 @@ sc.helpers.getEncryptedValue = function(key) {
 /**
  * Sets a value in the EncryptedLocalStore of AIR
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.setEncryptedValue = function(key, val) {
 	// stub
 };
@@ -6656,7 +6952,8 @@ sc.helpers.setEncryptedValue = function(key, val) {
  * Get the app storage directory
  * @TODO is there an equivalent for this on all platforms?
  * @platformstub
- */
+ * @member sc.helpers
+ */
 sc.helpers.getAppStoreDir = function() {
 	// stub
 };
@@ -6664,7 +6961,8 @@ sc.helpers.getAppStoreDir = function() {
 /**
  * Get the preferences file
  * @TODO this should be removed and we rely on the preferences lib 
- */
+ * @member sc.helpers
+ */
 sc.helpers.getPreferencesFile = function(name, create) {
 	// stub
 };
@@ -6694,7 +6992,7 @@ sc.helpers.getOS = function() {
 * checks to see if current platform is the one passed in. Use one of the defined constants, like SPAZCORE_OS_WINDOWS
 * 
 * @param {String} str the platform you're checking for
-* 
+* @member sc.helpers
 */
 sc.helpers.isOS = function(str) {
 	var type = sc.helpers.getOS();
@@ -6704,14 +7002,23 @@ sc.helpers.isOS = function(str) {
 	return false;
 };
 
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.isWindows = function() {
 	return sc.helpers.isOS(SPAZCORE_OS_WINDOWS);
 };
 
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.isLinux = function() {
 	return sc.helpers.isOS(SPAZCORE_OS_LINUX);
 };
 
+/**
+ * @member sc.helpers 
+ */
 sc.helpers.isMacOS = function() {
 	return sc.helpers.isOS(SPAZCORE_OS_MACOS);
 };
@@ -6741,6 +7048,7 @@ var sc, jQuery;
  * @param {integer} max_items the max # of item we should have
  * @param {boolean} remove_from_top whether or not to remove extra items from the top. default is FALSE
  * @requires jQuery
+ * @member sc.helpers 
  */
 sc.helpers.removeExtraElements = function(item_selector, max_items, remove_from_top) {
 
@@ -6783,6 +7091,7 @@ sc.helpers.removeExtraElements = function(item_selector, max_items, remove_from_
  * @param {string} item_selector a jquery-compatible selector to get items
  * @param {boolean} remove_from_top whether or not to remove extra items from the top. default is FALSE
  * @TODO
+ * @member sc.helpers 
  */
 sc.helpers.removeDuplicateElements = function(item_selector, remove_from_top) {
 	sc.helpers.dump('removeDuplicateElements TODO');
@@ -6798,6 +7107,7 @@ sc.helpers.removeDuplicateElements = function(item_selector, remove_from_top) {
  * @param {string} item_selector the jQuery selector for the elements which will contain the relative times
  * @param {string} time_attribute the attribute of the element that contains the created_at value
  * @requires jQuery
+ * @member sc.helpers 
  */
 sc.helpers.updateRelativeTimes = function(item_selector, time_attribute) {
 	jQuery(item_selector).each(function(i) {
@@ -6814,6 +7124,7 @@ sc.helpers.updateRelativeTimes = function(item_selector, time_attribute) {
  * 
  * @param {string} item_selector
  * @requires jQuery
+ * @member sc.helpers 
  */
 sc.helpers.markAllAsRead = function(item_selector) {
 	jQuery(item_selector).removeClass('new');
@@ -6831,7 +7142,7 @@ var sc, DOMParser;
 
 /**
  * Given a string, this returns an XMLDocument
- * @param {string} string
+ * @param {string} string an xml string
  * @return {XMLDocument}
  */
 sc.helpers.createXMLFromString = function (string) {
@@ -7019,7 +7330,7 @@ var sc, Mojo, use_palmhost_proxy;
 /**
  * dump an object's first level to console
  */
-sc.helpers.dump = function(obj, level) {
+sc.helpers.dump = function(obj, level, cb) {
 	var dumper;
 	
 	if (!level) { level = SPAZCORE_DUMPLEVEL_DEBUG; }
@@ -7044,6 +7355,10 @@ sc.helpers.dump = function(obj, level) {
 		dumper('NULL');
 	} else { // this is an object. we hope.
 		dumper(obj);
+	}
+	
+	if (cb) {
+		cb(obj, level);
 	}
 
 };
