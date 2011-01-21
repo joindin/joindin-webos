@@ -81,6 +81,15 @@ TalkDetailAssistant.prototype.setup = function() {
 	        spinning: false
 	    }
 	);
+
+ 	/*this.controller.setupWidget("commentButton",
+	    this.commentButtonAttributes = {
+	    },
+	    this.commentButtonModel = {
+	        label: 'Add Comment',
+	        disabled: false
+	    }
+	);*/
 	
 	this.controller.setupWidget("talkCommentsList",
 	    this.talkCommentsListAttributes = {
@@ -115,11 +124,34 @@ TalkDetailAssistant.prototype.setup = function() {
 	    Mojo.Event.tap,
 	    this.toggleCommentsDrawer.bindAsEventListener(this, 'talkCommentsDivider', 'talkCommentsDrawer')
 	);
+
+    /*this.controller.listen(
+        "commentButton",
+        Mojo.Event.tap,
+        this.addComment.bindAsEventListener(this)
+    );*/
 };
 
 TalkDetailAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
+    if(!PreJoindIn.getSetting('username')) {
+        this.commentButtonModel.disabled = true;
+    } else {
+        this.commentButtonModel.disabled = false;
+    }
+    
+    this.controller.modelChanged(this.commentButtonModel);
+    
+    if( this.talk_data.allow_comments != 1 ) {
+        if( this.talk_data.ccount == 0 ) {
+            $('#comments').hide();
+        } else {
+            $('#commentButton').hide();
+        }
+    } else {
+        $('#commentButton').show();
+    }
 };
 
 TalkDetailAssistant.prototype.deactivate = function(event) {
@@ -130,6 +162,19 @@ TalkDetailAssistant.prototype.deactivate = function(event) {
 TalkDetailAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
+};
+
+TalkDetailAssistant.prototype.addComment = function(event) {
+    var templateModel = {
+        title: this.talk_data.talk_title,
+        subtitle: this.talk_data.speaker
+    };
+
+    this.controller.stageController.pushScene({
+        name: 'comment', 
+        templateModel: templateModel,
+        transition: Mojo.Transition.crossFade
+    }, 'talk', this.talk_data);
 };
 
 TalkDetailAssistant.prototype.slidesButtonTap = function(event) {

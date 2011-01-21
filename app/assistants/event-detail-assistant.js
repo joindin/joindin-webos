@@ -6,7 +6,7 @@ function EventDetailAssistant(event_data) {
 
 EventDetailAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
-		
+    
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	$('#eventDetailHeader').html(
 	    Mojo.View.render({
@@ -29,6 +29,19 @@ EventDetailAssistant.prototype.setup = function() {
 	);
 	
 	/* setup widgets here */
+    this.controller.setupWidget(Mojo.Menu.commandMenu,
+        this.commandMenuAttributes = {
+            
+        },
+        this.commandMenuModel = {
+            visible: true,
+            items: [
+                { command: null },
+                { label: (this.event_data.user_attending ? "Attending!" : "Not Attending"), command: "do-toggle-attend" }
+            ]
+        }
+    );
+    
     this.initAppMenu();
     
 	this.controller.setupWidget("eventTalksDrawer",
@@ -95,13 +108,21 @@ EventDetailAssistant.prototype.setup = function() {
 	    this.eventTalksListModel = {items: []}
 	);
 	
+ 	/*this.controller.setupWidget("commentButton",
+	    this.commentButtonAttributes = {
+	    },
+	    this.commentButtonModel = {
+	        label: 'Add Comment',
+	        disabled: false
+	    }
+	);*/
 	
 	this.controller.setupWidget("eventCommentsList",
 	    this.eventCommentsListAttributes = {
 	        itemTemplate: "event-detail/eventCommentsList-item",
 	        emptyTemplate: "event-detail/eventCommentsList-empty",
 	        formatters: {
-	            uname: function(value, model) {
+	            cname: function(value, model) {
 	                if( !value )
 	                    model.uname = 'anonymous';
 	            }
@@ -138,12 +159,38 @@ EventDetailAssistant.prototype.setup = function() {
         this.viewTalkDetails.bindAsEventListener(this)
     );
     
+    /*this.controller.listen(
+        "commentButton",
+        Mojo.Event.tap,
+        this.addComment.bindAsEventListener(this)
+    );*/
+    
     this.refreshTalks();
 };
 
 EventDetailAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
+    if(!PreJoindIn.getSetting('username')) {
+        this.commandMenuModel.visible = false;
+	    this.commentButtonModel.disabled = true;
+    } else {
+        this.commandMenuModel.visible = true;
+	    this.commentButtonModel.disabled = false;
+    }
+    
+    if( this.event_data.allow_comments != 1 ) {
+        if( this.event_data.num_comments == 0 ) {
+            $('#comments').hide();
+        } else {
+            $('#commentButton').hide();
+        }
+    } else {
+        $('#commentButton').show();
+    }
+    
+    this.controller.modelChanged(this.commandMenuModel);
+    this.controller.modelChanged(this.commentButtonModel);
 };
 
 EventDetailAssistant.prototype.deactivate = function(event) {
@@ -154,6 +201,40 @@ EventDetailAssistant.prototype.deactivate = function(event) {
 EventDetailAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
+};
+
+
+EventDetailAssistant.prototype.handleCommand = function(event) {
+    if( event.type == Mojo.Event.command ){
+        switch( event.command ) {
+            case 'do-toggle-attend':
+                if( this.event_data.user_attending ) {
+                    this.event_data.user_attending = 0;
+                } else {
+                    this.event_data.user_attending = 1;
+                }
+                
+                PreJoindIn.getInstance().attendEvent({
+                    eid: this.event_data.ID,
+                    onSuccess: this.attendEventSuccess.bind(this),
+                    onFailure: this.attendEventFailure.bind(this)
+                });
+            break;
+        }
+    }
+};
+
+EventDetailAssistant.prototype.addComment = function(event) {
+    var templateModel = {
+        title: this.event_data.event_name,
+        subtitle: this.event_data.event_loc + "<br />" + this.event_data.formatted.event_range
+    };
+
+    this.controller.stageController.pushScene({
+        name: 'comment', 
+        templateModel: templateModel,
+        transition: Mojo.Transition.crossFade
+    }, 'event', this.event_data);
 };
 
 /**
@@ -222,6 +303,23 @@ EventDetailAssistant.prototype.refreshTalks = function() {
     });
 };
 
+EventDetailAssistant.prototype.attendEventSuccess = function(data) {
+    //this.hideTalksProgressSpinner();
+    
+    if(this.event_data.user_attending)
+        this.commandMenuModel.items[1].label = "Attending!";
+    else
+        this.commandMenuModel.items[1].label = "Not Attending";
+    
+    this.controller.modelChanged(this.commandMenuModel);
+};
+
+EventDetailAssistant.prototype.attendEventFailure = function(xhr, msg, exec) {
+    //this.hideTalksProgressSpinner();
+
+    Mojo.Controller.errorDialog(msg);
+};
+
 EventDetailAssistant.prototype.fetchEventTalksSuccess = function(data) {
     this.hideTalksProgressSpinner();
     
@@ -234,16 +332,6 @@ EventDetailAssistant.prototype.fetchEventTalksSuccess = function(data) {
     
     var that = this;
     data.each(function(talk) {
-        
-        talk.formatted = {};
-        
-        var speakers = [];
-        talk.speaker.each(function(speaker){
-            speakers.push(speaker.speaker_name);
-        });
-        
-        talk.formatted.speaker = speakers.join(', ');
-        
         that.eventTalksListModel.items.push(talk);
     });
     

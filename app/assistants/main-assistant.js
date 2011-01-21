@@ -50,18 +50,31 @@ MainAssistant.prototype.setup = function() {
 	this.controller.listen("eventTypeButton", Mojo.Event.tap, this.setEventType.bindAsEventListener(this));
 	
 	/* load initial data */
-	Mojo.Log.error("Getting Default Sort:", PreJoindIn.getSetting('defaultEventSort', 'hot'));
 	this.updateEventList(PreJoindIn.getSetting('defaultEventSort', 'hot'), true);
 };
 
 MainAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
+    $(document).unbind('.needReload');
+    
+    if( this._attendingRequiresReload && this.currentFilter == 'attending' ) {
+        this.updateEventList('attending', true);
+    }
+    
+    delete this._attendingRequiresReload;
 };
 
 MainAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
+	Mojo.Log.info("Listening for changes that may require a list reload");
+	
+    $(document).bind(sc.events.joindinAttendEventSuccess + '.needReload', function(e, data){
+        Mojo.Log.info("Scheduling event list for attending reload");
+        this._attendingRequiresReload = true;
+        $(document).unbind(sc.events.joindinAttendEventSuccess + '.needReload');
+    }.bind(this))
 };
 
 MainAssistant.prototype.cleanup = function(event) {

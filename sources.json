@@ -1,6 +1,6 @@
 [
     {"source": "library/stevenleviathan/date.format.js"},
-    {"source": "library/jquery/jquery-1.4.2.js"},
+    {"source": "library/jquery/jquery-1.4.4.min.js"},
     {"source": "library/spaz/spazcore-webos-basic.js"},
     {"source": "library/spaz/spazjoindin.js"},
     {"source": "app/models/PreJoindIn.js"},
@@ -25,5 +25,9 @@
     {
         "scenes": "preferences",
         "source": "app/assistants/preferences-assistant.js"
+    },
+    {
+        "scenes": "comment",
+        "source": "app/assistants/comment-assistant.js"
     }
 ]

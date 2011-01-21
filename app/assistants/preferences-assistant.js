@@ -1,7 +1,5 @@
 function PreferencesAssistant() {
     scene_helpers.addCommonSceneMethods(this);
-    
-    this.settingsAltered = false;
 }
 
 PreferencesAssistant.prototype.setup = function() {
@@ -67,19 +65,17 @@ PreferencesAssistant.prototype.setup = function() {
 	    Mojo.Event.propertyChange,
 	    this.triggerSave.bind(this)
 	);
-	
-	this.reflectCurrentSettings();
 };
 
 PreferencesAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
+   	this.reflectCurrentSettings();
 };
 
 PreferencesAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
-    Mojo.Event.send(document, 'settingsChanged');
 };
 
 PreferencesAssistant.prototype.cleanup = function(event) {
@@ -131,7 +127,7 @@ PreferencesAssistant.prototype.triggerSave = function() {
     PreJoindIn.saveSettings(
         function(event) {
             //Success
-            this.settingsAltered = true;
+            Mojo.Event.send(document, 'settingsChanged');
             
             this.reflectCurrentSettings();
         }.bind(this),
@@ -156,7 +152,7 @@ PreferencesAssistant.prototype.triggerSingleSave = function(setting, reflect) {
     PreJoindIn.saveSettings(
         function(event) {
             //Success
-            this.settingsAltered = true;
+            Mojo.Event.send(document, 'settingsChanged');
             
             if( reflect )
                 this.reflectCurrentSettings();
@@ -185,7 +181,7 @@ PreferencesAssistant.prototype.logoutAccountButtonTap = function() {
                 PreJoindIn.saveSettings(
                     function(event) {
                         //Success
-                        this.settingsAltered = true;
+                        Mojo.Event.send(document, 'settingsChanged');
 
                         this.reflectCurrentSettings();
                     }.bind(this),
