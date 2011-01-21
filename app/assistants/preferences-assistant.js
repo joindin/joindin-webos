@@ -124,17 +124,10 @@ PreferencesAssistant.prototype.triggerSave = function() {
         PreJoindIn.setSetting(key, this.model[key]);
     }
     
-    PreJoindIn.saveSettings(
-        function(event) {
-            //Success
-            Mojo.Event.send(document, 'settingsChanged');
-            
-            this.reflectCurrentSettings();
-        }.bind(this),
-        function(event) {
-            Mojo.Controller.errorDialog("Error Saving Settings...");
-        }.bind(this)
-    );
+    PreJoindIn.saveSettings();    
+    Mojo.Event.send(document, 'settingsChanged');
+    
+    this.reflectCurrentSettings();
 };
 
 PreferencesAssistant.prototype.triggerSingleSave = function(setting, reflect) {
@@ -149,18 +142,11 @@ PreferencesAssistant.prototype.triggerSingleSave = function(setting, reflect) {
         }
     }
     
-    PreJoindIn.saveSettings(
-        function(event) {
-            //Success
-            Mojo.Event.send(document, 'settingsChanged');
-            
-            if( reflect )
-                this.reflectCurrentSettings();
-        }.bind(this),
-        function(event) {
-            Mojo.Controller.errorDialog("Error Saving Settings...");
-        }.bind(this)
-    );
+    PreJoindIn.saveSettings();    
+    Mojo.Event.send(document, 'settingsChanged');
+    
+    if( reflect )
+        this.reflectCurrentSettings();
 };
 
 PreferencesAssistant.prototype.accountButtonTap = function() {
@@ -178,17 +164,11 @@ PreferencesAssistant.prototype.logoutAccountButtonTap = function() {
                 PreJoindIn.setSetting('username', null);
                 PreJoindIn.setSetting('password', null);
                 
-                PreJoindIn.saveSettings(
-                    function(event) {
-                        //Success
-                        Mojo.Event.send(document, 'settingsChanged');
+                PreJoindIn.saveSettings();
+                
+                Mojo.Event.send(document, 'settingsChanged');
 
-                        this.reflectCurrentSettings();
-                    }.bind(this),
-                    function(event) {
-                        Mojo.Controller.errorDialog("Error Saving User Account...");
-                    }.bind(this)
-                );
+                this.reflectCurrentSettings();
             } else {
                 //Do Nothing
             }
