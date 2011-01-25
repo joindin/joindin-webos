@@ -8,12 +8,12 @@
 	        {
 	            "type": "web",
 	            "label": "Report Bug",
-	            "url": "http://bitbucket.org/dcousineau/prejoindin/issues/new"
+	            "url": "https://github.com/joindin/joindin-webos/issues"
 	        },
 	        {
 	            "type": "web",
 	            "label": "Source",
-	            "url": "http://bitbucket.org/dcousineau/prejoindin"
+	            "url": "https://github.com/joindin/joindin-webos"
 	        },
 	        {
 	            "type": "web",
