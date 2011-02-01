@@ -1,6 +1,6 @@
 [
-    {"source": "library/stevenleviathan/date.format.js"},
-    {"source": "library/jquery/jquery-1.4.4.min.js"},
+    {"source": "library/stevenlevithan/date.format.js"},
+    {"source": "library/jquery/jquery-1.5.min.js"},
     {"source": "library/spaz/spazcore-webos-basic.js"},
     {"source": "library/spaz/spazjoindin.js"},
     {"source": "app/models/PreJoindIn.js"},
